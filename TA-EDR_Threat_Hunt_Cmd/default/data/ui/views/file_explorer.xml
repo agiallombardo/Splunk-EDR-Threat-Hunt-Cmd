@@ -7,11 +7,11 @@
     <input type="dropdown" token="tenant_param">
       <label>Tenant</label>
       <search>
-        <query>
+        <query> <![CDATA[
           | inputlookup edr_agents
           | stats count by tenant
           | sort tenant
-        </query>
+        ]]></query>
       </search>
       <fieldForLabel>tenant</fieldForLabel>
       <fieldForValue>tenant</fieldForValue>
@@ -47,11 +47,11 @@
     <input type="multiselect" token="os_platform_token" searchWhenChanged="false">
       <label>OS Platform</label>
       <search>
-        <query>
+        <query> <![CDATA[
           | inputlookup edr_agents
           | stats count by os_platform
           | sort os_platform
-        </query>
+        ]]></query>
       </search>
       <fieldForLabel>os_platform</fieldForLabel>
       <fieldForValue>os_platform</fieldForValue>
@@ -140,14 +140,14 @@
       <title>Execution Summary</title>
       <single>
         <search>
-          <query>
+          <query> <![CDATA[
             | inputlookup edr_agents
             | search 
               $os_platform_token$
               $hostname_token$
             | head $limit_token$
             | stats count as "Agent Count"
-          </query>
+          ]]></query>
         </search>
         <option name="drilldown">none</option>
         <option name="rangeColors">["0x53a051", "0x0877a6", "0xf8be34", "0xf1813f", "0xdc4e41"]</option>
@@ -160,7 +160,7 @@
       <title>File Activity Summary</title>
       <single>
         <search>
-          <query>
+          <query> <![CDATA[
             | inputlookup edr_agents
             | search 
               $os_platform_token$
@@ -178,7 +178,7 @@
             | stats 
               sum(edr_file_count) as "Total Files" 
               dc(edr_hostname) as "Hosts with Matches"
-          </query>
+          ]]></query>
         </search>
         <option name="drilldown">none</option>
         <option name="rangeColors">["0x53a051", "0x0877a6", "0xf8be34", "0xf1813f", "0xdc4e41"]</option>
@@ -193,7 +193,7 @@
       <title>File Names (Top 10)</title>
       <chart>
         <search>
-          <query>
+          <query> <![CDATA[
             | inputlookup edr_agents
             | search 
               $os_platform_token$
@@ -213,7 +213,7 @@
             | stats count by edr_file_names
             | sort -count
             | head 10
-          </query>
+          ]]></query>
         </search>
         <option name="charting.chart">bar</option>
         <option name="charting.drilldown">none</option>
@@ -227,7 +227,7 @@
       <title>File Extensions</title>
       <chart>
         <search>
-          <query>
+          <query> <![CDATA[
             | inputlookup edr_agents
             | search 
               $os_platform_token$
@@ -248,7 +248,7 @@
             | stats count by extension
             | sort -count
             | head 10
-          </query>
+          ]]></query>
         </search>
         <option name="charting.chart">pie</option>
         <option name="charting.drilldown">none</option>
@@ -262,7 +262,7 @@
       <title>File Activity Timeline</title>
       <viz type="timeline_app.timeline">
         <search>
-          <query>
+          <query> <![CDATA[
             | inputlookup edr_agents
             | search 
               $os_platform_token$
@@ -283,7 +283,7 @@
             | eval description=mvindex(edr_file_paths, 0)
             | eval host=edr_hostname
             | table timestamp category title description host
-          </query>
+          ]]></query>
           <earliest>-24h@h</earliest>
           <latest>now</latest>
         </search>
@@ -309,7 +309,7 @@
       <title>File Paths</title>
       <table>
         <search>
-          <query>
+          <query> <![CDATA[
             | inputlookup edr_agents
             | search 
               $os_platform_token$
@@ -328,7 +328,7 @@
             | mvexpand edr_file_paths
             | table edr_hostname edr_file_paths edr_file_write_time
             | rename edr_hostname as "Hostname" edr_file_paths as "File Path" edr_file_write_time as "Write Time"
-          </query>
+          ]]></query>
         </search>
         <option name="count">10</option>
         <option name="dataOverlayMode">none</option>
@@ -345,7 +345,7 @@
       <title>File Activity by Host</title>
       <chart>
         <search>
-          <query>
+          <query> <![CDATA[
             | inputlookup edr_agents
             | search 
               $os_platform_token$
@@ -364,7 +364,7 @@
             | stats count by edr_hostname
             | sort -count
             | head 10
-          </query>
+          ]]></query>
         </search>
         <option name="charting.chart">column</option>
         <option name="charting.drilldown">none</option>
@@ -378,7 +378,7 @@
       <title>Files by Process</title>
       <chart>
         <search>
-          <query>
+          <query> <![CDATA[
             | inputlookup edr_agents
             | search 
               $os_platform_token$
@@ -398,7 +398,7 @@
             | stats count by edr_process_names
             | sort -count
             | head 10
-          </query>
+          ]]></query>
         </search>
         <option name="charting.chart">column</option>
         <option name="charting.drilldown">none</option>

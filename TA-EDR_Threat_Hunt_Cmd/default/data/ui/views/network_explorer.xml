@@ -7,11 +7,11 @@
     <input type="dropdown" token="tenant_param">
       <label>Tenant</label>
       <search>
-        <query>
+        <query> <![CDATA[
           | inputlookup edr_agents
           | stats count by tenant
           | sort tenant
-        </query>
+        ]]></query>
       </search>
       <fieldForLabel>tenant</fieldForLabel>
       <fieldForValue>tenant</fieldForValue>
@@ -47,11 +47,11 @@
     <input type="multiselect" token="os_platform_token" searchWhenChanged="false">
       <label>OS Platform</label>
       <search>
-        <query>
+        <query> <![CDATA[
           | inputlookup edr_agents
           | stats count by os_platform
           | sort os_platform
-        </query>
+        ]]></query>
       </search>
       <fieldForLabel>os_platform</fieldForLabel>
       <fieldForValue>os_platform</fieldForValue>
@@ -140,14 +140,14 @@
       <title>Execution Summary</title>
       <single>
         <search>
-          <query>
+          <query> <![CDATA[
             | inputlookup edr_agents
             | search 
               $os_platform_token$
               $hostname_token$
             | head $limit_token$
             | stats count as "Agent Count"
-          </query>
+          ]]></query>
         </search>
         <option name="drilldown">none</option>
         <option name="rangeColors">["0x53a051", "0x0877a6", "0xf8be34", "0xf1813f", "0xdc4e41"]</option>
@@ -160,7 +160,7 @@
       <title>Network Connection Summary</title>
       <single>
         <search>
-          <query>
+          <query> <![CDATA[
             | inputlookup edr_agents
             | search 
               $os_platform_token$
@@ -178,7 +178,7 @@
             | stats 
               sum(edr_network_connection_count) as "Total Connections" 
               dc(edr_hostname) as "Hosts with Matches"
-          </query>
+          ]]></query>
         </search>
         <option name="drilldown">none</option>
         <option name="rangeColors">["0x53a051", "0x0877a6", "0xf8be34", "0xf1813f", "0xdc4e41"]</option>
@@ -193,7 +193,7 @@
       <title>Network Connections Map</title>
       <viz type="leaflet_maps_app.maps-plus">
         <search>
-          <query>
+          <query> <![CDATA[
             | inputlookup edr_agents
             | search 
               $os_platform_token$
@@ -213,7 +213,7 @@
             | iplocation edr_remote_ips
             | stats count by edr_remote_ips lat lon City Country
             | sort -count
-          </query>
+          ]]></query>
         </search>
         <option name="drilldown">none</option>
         <option name="leaflet_maps_app.maps-plus.allValues">1</option>
@@ -250,7 +250,7 @@
       <title>Remote IPs (Top 10)</title>
       <chart>
         <search>
-          <query>
+          <query> <![CDATA[
             | inputlookup edr_agents
             | search 
               $os_platform_token$
@@ -270,7 +270,7 @@
             | stats count by edr_remote_ips
             | sort -count
             | head 10
-          </query>
+          ]]></query>
         </search>
         <option name="charting.chart">bar</option>
         <option name="charting.drilldown">none</option>
@@ -284,7 +284,7 @@
       <title>Domains (Top 10)</title>
       <chart>
         <search>
-          <query>
+          <query> <![CDATA[
             | inputlookup edr_agents
             | search 
               $os_platform_token$
@@ -304,7 +304,7 @@
             | stats count by edr_domains
             | sort -count
             | head 10
-          </query>
+          ]]></query>
         </search>
         <option name="charting.chart">bar</option>
         <option name="charting.drilldown">none</option>
@@ -320,7 +320,7 @@
       <title>Connection Port Distribution</title>
       <chart>
         <search>
-          <query>
+          <query> <![CDATA[
             | inputlookup edr_agents
             | search 
               $os_platform_token$
@@ -340,7 +340,7 @@
             | stats count by edr_remote_ports
             | sort -count
             | head 10
-          </query>
+          ]]></query>
         </search>
         <option name="charting.chart">pie</option>
         <option name="charting.drilldown">none</option>
@@ -352,7 +352,7 @@
       <title>Network Connections by Process</title>
       <chart>
         <search>
-          <query>
+          <query> <![CDATA[
             | inputlookup edr_agents
             | search 
               $os_platform_token$
@@ -372,7 +372,7 @@
             | stats count by edr_process_names
             | sort -count
             | head 10
-          </query>
+          ]]></query>
         </search>
         <option name="charting.chart">column</option>
         <option name="charting.drilldown">none</option>
@@ -388,7 +388,7 @@
       <title>Network Connections</title>
       <table>
         <search>
-          <query>
+          <query> <![CDATA[
             | inputlookup edr_agents
             | search 
               $os_platform_token$
@@ -409,7 +409,7 @@
             | mvexpand edr_process_names
             | table edr_hostname edr_process_names edr_remote_ips edr_remote_ports edr_domains edr_timestamp
             | rename edr_hostname as "Hostname" edr_process_names as "Process" edr_remote_ips as "Remote IP" edr_remote_ports as "Port" edr_domains as "Domain" edr_timestamp as "Timestamp"
-          </query>
+          ]]></query>
         </search>
         <option name="count">10</option>
         <option name="dataOverlayMode">none</option>

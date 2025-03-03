@@ -7,11 +7,11 @@
     <input type="multiselect" token="tenant_token" searchWhenChanged="false">
       <label>Tenant</label>
       <search>
-        <query>
+        <query> <![CDATA[
           | inputlookup edr_agents
           | stats count by tenant
           | sort tenant
-        </query>
+        ]]></query>
       </search>
       <fieldForLabel>tenant</fieldForLabel>
       <fieldForValue>tenant</fieldForValue>
@@ -35,11 +35,11 @@
     <input type="multiselect" token="os_platform_token" searchWhenChanged="false">
       <label>OS Platform</label>
       <search>
-        <query>
+        <query> <![CDATA[
           | inputlookup edr_agents
           | stats count by os_platform
           | sort os_platform
-        </query>
+        ]]></query>
       </search>
       <fieldForLabel>os_platform</fieldForLabel>
       <fieldForValue>os_platform</fieldForValue>
@@ -60,11 +60,11 @@
     <input type="multiselect" token="status_token" searchWhenChanged="false">
       <label>Status</label>
       <search>
-        <query>
+        <query> <![CDATA[
           | inputlookup edr_agents
           | stats count by status
           | sort status
-        </query>
+        ]]></query>
       </search>
       <fieldForLabel>status</fieldForLabel>
       <fieldForValue>status</fieldForValue>
@@ -138,7 +138,7 @@
       </input>
       <table>
         <search>
-          <query>
+          <query> <![CDATA[
             | inputlookup edr_agents
             | search 
               $tenant_token$ 
@@ -148,7 +148,7 @@
               $status_token$
             | table agent_id hostname ip_address os_platform version status last_seen provider tenant
             | sort hostname
-          </query>
+          ]]></query>
         </search>
         <option name="count">$agent_count$</option>
         <option name="dataOverlayMode">none</option>

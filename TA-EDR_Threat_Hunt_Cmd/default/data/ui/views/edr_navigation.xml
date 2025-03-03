@@ -237,7 +237,7 @@
       <title>System Status</title>
       <single>
         <search>
-          <query>
+          <query> <![CDATA[
             | inputlookup edr_health_results
             | sort -_key
             | head 1
@@ -251,7 +251,7 @@
             | eval status_with_icon=icon." ".status
             | table status_with_icon
             | rename status_with_icon as "Health Status"
-          </query>
+          ]]></query>
           <earliest>-24h</earliest>
           <latest>now</latest>
         </search>
@@ -269,10 +269,10 @@
       <title>Total Agents</title>
       <single>
         <search>
-          <query>
+          <query> <![CDATA[
             | inputlookup edr_agents
             | stats count
-          </query>
+          ]]></query>
         </search>
         <option name="drilldown">none</option>
         <option name="rangeColors">["0x53a051", "0x0877a6", "0xf8be34", "0xf1813f", "0xdc4e41"]</option>
@@ -285,11 +285,11 @@
       <title>Provider Distribution</title>
       <chart>
         <search>
-          <query>
+          <query> <![CDATA[
             | inputlookup edr_agents
             | stats count by provider
             | sort -count
-          </query>
+          ]]></query>
         </search>
         <option name="charting.chart">pie</option>
         <option name="charting.drilldown">none</option>

@@ -56,7 +56,7 @@
       <title>Health Status</title>
       <single>
         <search>
-          <query>
+          <query> <![CDATA[
             | inputlookup edr_health_results
             | sort -_key
             | head 1
@@ -70,7 +70,7 @@
             | eval status_with_icon=icon." ".status
             | table status_with_icon
             | rename status_with_icon as "Health Status"
-          </query>
+          ]]></query>
           <earliest>-24h</earliest>
           <latest>now</latest>
         </search>
@@ -88,14 +88,14 @@
       <title>Overall Health Score</title>
       <single>
         <search>
-          <query>
+          <query> <![CDATA[
             | inputlookup edr_health_results
             | sort -_key
             | head 1
             | eval score=overall_score."/100"
             | table score
             | rename score as "Health Score"
-          </query>
+          ]]></query>
           <earliest>-24h</earliest>
           <latest>now</latest>
         </search>
@@ -113,7 +113,7 @@
       <title>Last Check</title>
       <single>
         <search>
-          <query>
+          <query> <![CDATA[
             | inputlookup edr_health_results
             | sort -_key
             | head 1
@@ -121,7 +121,7 @@
             | eval last_check=last_check." (".relative_time(now(), "-".round((now()-strptime(timestamp, "%Y-%m-%d %H:%M:%S")))."s").")"
             | table last_check
             | rename last_check as "Last Check"
-          </query>
+          ]]></query>
           <earliest>-24h</earliest>
           <latest>now</latest>
         </search>
@@ -136,10 +136,10 @@
       <title>Total Agent Count</title>
       <single>
         <search>
-          <query>
+          <query> <![CDATA[
             | inputlookup edr_agents
             | stats count
-          </query>
+          ]]></query>
         </search>
         <option name="drilldown">none</option>
         <option name="rangeColors">["0x53a051", "0x0877a6", "0xf8be34", "0xf1813f", "0xdc4e41"]</option>
@@ -152,11 +152,11 @@
       <title>Agent Status Distribution</title>
       <chart>
         <search>
-          <query>
+          <query> <![CDATA[
             | inputlookup edr_agents
             | stats count by status
             | sort -count
-          </query>
+          ]]></query>
         </search>
         <option name="charting.chart">pie</option>
         <option name="charting.drilldown">none</option>
@@ -170,11 +170,11 @@
       <title>Provider Distribution</title>
       <chart>
         <search>
-          <query>
+          <query> <![CDATA[
             | inputlookup edr_agents
             | stats count by provider
             | sort -count
-          </query>
+          ]]></query>
         </search>
         <option name="charting.chart">pie</option>
         <option name="charting.drilldown">none</option>
@@ -191,7 +191,7 @@
       <title>Component Health Scores</title>
       <chart>
         <search>
-          <query>
+          <query> <![CDATA[
             | inputlookup edr_health_results
             | sort -_key
             | head 1
@@ -213,7 +213,7 @@
                 column=="search_commands", "Search Commands",
                 true(), column
               )
-          </query>
+          ]]></query>
           <earliest>-24h</earliest>
           <latest>now</latest>
         </search>

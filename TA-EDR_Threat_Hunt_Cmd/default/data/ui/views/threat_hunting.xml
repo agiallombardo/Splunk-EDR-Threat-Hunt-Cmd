@@ -7,11 +7,11 @@
     <input type="dropdown" token="tenant_param">
       <label>Tenant</label>
       <search>
-        <query>
+        <query> <![CDATA[
           | inputlookup edr_agents
           | stats count by tenant
           | sort tenant
-        </query>
+        ]]></query>
       </search>
       <fieldForLabel>tenant</fieldForLabel>
       <fieldForValue>tenant</fieldForValue>
@@ -49,11 +49,11 @@
     <input type="multiselect" token="os_platform_token" searchWhenChanged="false">
       <label>OS Platform</label>
       <search>
-        <query>
+        <query> <![CDATA[
           | inputlookup edr_agents
           | stats count by os_platform
           | sort os_platform
-        </query>
+        ]]></query>
       </search>
       <fieldForLabel>os_platform</fieldForLabel>
       <fieldForValue>os_platform</fieldForValue>
@@ -142,14 +142,14 @@
       <title>Execution Summary</title>
       <single>
         <search>
-          <query>
+          <query> <![CDATA[
             | inputlookup edr_agents
             | search 
               $os_platform_token$
               $hostname_token$
             | head $limit_token$
             | stats count as "Agent Count"
-          </query>
+          ]]></query>
         </search>
         <option name="drilldown">none</option>
         <option name="rangeColors">["0x53a051", "0x0877a6", "0xf8be34", "0xf1813f", "0xdc4e41"]</option>
@@ -162,7 +162,7 @@
       <title>Threat Detection Summary</title>
       <single>
         <search>
-          <query>
+          <query> <![CDATA[
             | inputlookup edr_agents
             | search 
               $os_platform_token$
@@ -180,7 +180,7 @@
             | stats 
               sum(edr_threat_count) as "Total Threats" 
               dc(edr_hostname) as "Hosts with Threats"
-          </query>
+          ]]></query>
         </search>
         <option name="drilldown">none</option>
         <option name="rangeColors">["0x53a051", "0x0877a6", "0xf8be34", "0xf1813f", "0xdc4e41"]</option>
@@ -195,7 +195,7 @@
       <title>Threat Names</title>
       <chart>
         <search>
-          <query>
+          <query> <![CDATA[
             | inputlookup edr_agents
             | search 
               $os_platform_token$
@@ -215,7 +215,7 @@
             | stats count by edr_threat_names
             | sort -count
             | head 10
-          </query>
+          ]]></query>
         </search>
         <option name="charting.chart">column</option>
         <option name="charting.drilldown">none</option>
@@ -229,7 +229,7 @@
       <title>Threat Classifications</title>
       <chart>
         <search>
-          <query>
+          <query> <![CDATA[
             | inputlookup edr_agents
             | search 
               $os_platform_token$
@@ -248,7 +248,7 @@
             | mvexpand edr_threat_classifications
             | stats count by edr_threat_classifications
             | sort -count
-          </query>
+          ]]></query>
         </search>
         <option name="charting.chart">pie</option>
         <option name="charting.drilldown">none</option>
@@ -262,7 +262,7 @@
       <title>Threat Event Timeline</title>
       <viz type="timeline_app.timeline">
         <search>
-          <query>
+          <query> <![CDATA[
             | inputlookup edr_agents
             | search 
               $os_platform_token$
@@ -283,7 +283,7 @@
             | eval description=mvindex(edr_threat_classifications, 0)
             | eval host=edr_hostname
             | table timestamp category title description host
-          </query>
+          ]]></query>
           <earliest>-24h@h</earliest>
           <latest>now</latest>
         </search>
@@ -309,7 +309,7 @@
       <title>Threat Severity Distribution</title>
       <chart>
         <search>
-          <query>
+          <query> <![CDATA[
             | inputlookup edr_agents
             | search 
               $os_platform_token$
@@ -335,7 +335,7 @@
               )
             | stats count by severity
             | sort case(severity="Critical", 0, severity="High", 1, severity="Medium", 2, severity="Low", 3, severity="Unknown", 4)
-          </query>
+          ]]></query>
         </search>
         <option name="charting.chart">bar</option>
         <option name="charting.drilldown">none</option>
@@ -348,7 +348,7 @@
       <title>Threats by Host</title>
       <chart>
         <search>
-          <query>
+          <query> <![CDATA[
             | inputlookup edr_agents
             | search 
               $os_platform_token$
@@ -367,7 +367,7 @@
             | stats count by edr_hostname
             | sort -count
             | head 10
-          </query>
+          ]]></query>
         </search>
         <option name="charting.chart">column</option>
         <option name="charting.drilldown">none</option>
@@ -383,7 +383,7 @@
       <title>Threat Details</title>
       <table>
         <search>
-          <query>
+          <query> <![CDATA[
             | inputlookup edr_agents
             | search 
               $os_platform_token$
@@ -404,7 +404,7 @@
             | mvexpand edr_threat_severities
             | table edr_hostname edr_threat_names edr_threat_classifications edr_threat_severities edr_threat_timestamp
             | rename edr_hostname as "Hostname" edr_threat_names as "Threat Name" edr_threat_classifications as "Classification" edr_threat_severities as "Severity" edr_threat_timestamp as "Timestamp"
-          </query>
+          ]]></query>
         </search>
         <option name="count">10</option>
         <option name="dataOverlayMode">none</option>

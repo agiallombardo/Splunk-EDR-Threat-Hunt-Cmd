@@ -7,11 +7,11 @@
     <input type="multiselect" token="tenant_token" searchWhenChanged="false">
       <label>Tenant</label>
       <search>
-        <query>
+        <query> <![CDATA[
           | inputlookup edr_agents
           | stats count by tenant
           | sort tenant
-        </query>
+        ]]></query>
       </search>
       <fieldForLabel>tenant</fieldForLabel>
       <fieldForValue>tenant</fieldForValue>
@@ -35,11 +35,11 @@
     <input type="multiselect" token="status_token" searchWhenChanged="false">
       <label>Status</label>
       <search>
-        <query>
+        <query> <![CDATA[
           | inputlookup edr_agents
           | stats count by status
           | sort status
-        </query>
+        ]]></query>
       </search>
       <fieldForLabel>status</fieldForLabel>
       <fieldForValue>status</fieldForValue>
@@ -104,7 +104,7 @@
       <title>Geographic Distribution of Agents</title>
       <viz type="leaflet_maps_app.maps-plus">
         <search>
-          <query>
+          <query> <![CDATA[
             | inputlookup edr_agents
             | search 
               $tenant_token$ 
@@ -113,7 +113,7 @@
             | iplocation ip_address
             | stats count by ip_address lat lon City Country provider
             | sort -count
-          </query>
+          ]]></query>
         </search>
         <option name="drilldown">none</option>
         <option name="leaflet_maps_app.maps-plus.allValues">1</option>
@@ -150,7 +150,7 @@
       <title>Agents by Country</title>
       <chart>
         <search>
-          <query>
+          <query> <![CDATA[
             | inputlookup edr_agents
             | search 
               $tenant_token$ 
@@ -161,7 +161,7 @@
             | sort -count
             | where isnotnull(Country)
             | head 10
-          </query>
+          ]]></query>
         </search>
         <option name="charting.chart">bar</option>
         <option name="charting.drilldown">none</option>
@@ -175,7 +175,7 @@
       <title>Agents by City (Top 10)</title>
       <chart>
         <search>
-          <query>
+          <query> <![CDATA[
             | inputlookup edr_agents
             | search 
               $tenant_token$ 
@@ -187,7 +187,7 @@
             | sort -count
             | where isnotnull(City) AND City!=""
             | head 10
-          </query>
+          ]]></query>
         </search>
         <option name="charting.chart">pie</option>
         <option name="charting.drilldown">none</option>
@@ -202,7 +202,7 @@
       <title>Agent Distribution by Region</title>
       <table>
         <search>
-          <query>
+          <query> <![CDATA[
             | inputlookup edr_agents
             | search 
               $tenant_token$ 
@@ -213,7 +213,7 @@
             | sort -"Agent Count"
             | where isnotnull(Country)
             | rename Country as "Country", provider as "Provider"
-          </query>
+          ]]></query>
         </search>
         <option name="count">20</option>
         <option name="dataOverlayMode">none</option>

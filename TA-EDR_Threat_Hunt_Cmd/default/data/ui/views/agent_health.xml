@@ -7,11 +7,11 @@
     <input type="multiselect" token="tenant_token" searchWhenChanged="false">
       <label>Tenant</label>
       <search>
-        <query>
+        <query> <![CDATA[
           | inputlookup edr_agents
           | stats count by tenant
           | sort tenant
-        </query>
+        ]]></query>
       </search>
       <fieldForLabel>tenant</fieldForLabel>
       <fieldForValue>tenant</fieldForValue>
@@ -35,11 +35,11 @@
     <input type="multiselect" token="os_platform_token" searchWhenChanged="false">
       <label>OS Platform</label>
       <search>
-        <query>
+        <query> <![CDATA[
           | inputlookup edr_agents
           | stats count by os_platform
           | sort os_platform
-        </query>
+        ]]></query>
       </search>
       <fieldForLabel>os_platform</fieldForLabel>
       <fieldForValue>os_platform</fieldForValue>
@@ -111,7 +111,7 @@
       <title>Agent Status Overview</title>
       <chart>
         <search>
-          <query>
+          <query> <![CDATA[
             | inputlookup edr_agents
             | search 
               $tenant_token$ 
@@ -120,7 +120,7 @@
               $hostname_token$
             | stats count by status
             | sort -count
-          </query>
+          ]]></query>
         </search>
         <option name="charting.chart">pie</option>
         <option name="charting.drilldown">none</option>
@@ -135,7 +135,7 @@
       <title>Agent Status Count</title>
       <single>
         <search>
-          <query>
+          <query> <![CDATA[
             | inputlookup edr_agents
             | search 
               $tenant_token$ 
@@ -146,7 +146,7 @@
                 count(eval(status="online")) AS "Online" 
                 count(eval(status="offline")) AS "Offline" 
                 count(eval(status="unknown")) AS "Unknown"
-          </query>
+          ]]></query>
         </search>
         <option name="drilldown">none</option>
         <option name="refresh.display">progressbar</option>
@@ -169,7 +169,7 @@
       <title>Last Seen Distribution</title>
       <chart>
         <search>
-          <query>
+          <query> <![CDATA[
             | inputlookup edr_agents
             | search 
               $tenant_token$ 
@@ -192,7 +192,7 @@
                 time_bucket="More than 30 days", 3,
                 time_bucket="Unknown", 4
               )
-          </query>
+          ]]></query>
         </search>
         <option name="charting.chart">column</option>
         <option name="charting.drilldown">none</option>
@@ -207,7 +207,7 @@
       <title>Agent Version Health</title>
       <chart>
         <search>
-          <query>
+          <query> <![CDATA[
             | inputlookup edr_agents
             | search 
               $tenant_token$ 
@@ -224,7 +224,7 @@
             | eval percentage = round((version_count / total_count) * 100, 1)
             | sort -version_count
             | head 10
-          </query>
+          ]]></query>
         </search>
         <option name="charting.chart">bar</option>
         <option name="charting.drilldown">none</option>
@@ -240,7 +240,7 @@
       <title>Agent Status by Provider</title>
       <chart>
         <search>
-          <query>
+          <query> <![CDATA[
             | inputlookup edr_agents
             | search 
               $tenant_token$ 
@@ -249,7 +249,7 @@
               $hostname_token$
             | stats count by provider status
             | sort provider status
-          </query>
+          ]]></query>
         </search>
         <option name="charting.chart">column</option>
         <option name="charting.chart.stackMode">stacked</option>
@@ -264,7 +264,7 @@
       <title>Agent Status by OS Platform</title>
       <chart>
         <search>
-          <query>
+          <query> <![CDATA[
             | inputlookup edr_agents
             | search 
               $tenant_token$ 
@@ -273,7 +273,7 @@
               $hostname_token$
             | stats count by os_platform status
             | sort os_platform status
-          </query>
+          ]]></query>
         </search>
         <option name="charting.chart">column</option>
         <option name="charting.chart.stackMode">stacked</option>
@@ -290,7 +290,7 @@
       <title>Agent Health Trend</title>
       <chart>
         <search>
-          <query>
+          <query> <![CDATA[
             | inputlookup edr_agents
             | search 
               $tenant_token$ 
@@ -299,7 +299,7 @@
               $hostname_token$
             | eval _time=strptime(last_seen, "%Y-%m-%dT%H:%M:%SZ")
             | timechart span=1d count by status
-          </query>
+          ]]></query>
           <earliest>-30d@d</earliest>
           <latest>now</latest>
         </search>
@@ -318,7 +318,7 @@
       <title>Agents Needing Attention</title>
       <table>
         <search>
-          <query>
+          <query> <![CDATA[
             | inputlookup edr_agents
             | search 
               $tenant_token$ 
@@ -342,7 +342,7 @@
             | table hostname ip_address os_platform version issue severity last_seen provider tenant
             | rename hostname as "Hostname" ip_address as "IP Address" os_platform as "OS Platform" version as "Version" issue as "Issue" severity as "Severity" last_seen as "Last Seen" provider as "Provider" tenant as "Tenant"
             | sort "Severity", "Last Seen"
-          </query>
+          ]]></query>
         </search>
         <option name="count">20</option>
         <option name="dataOverlayMode">none</option>

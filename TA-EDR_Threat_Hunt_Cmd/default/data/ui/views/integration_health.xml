@@ -56,12 +56,12 @@
       <title>Health Score Trend</title>
       <chart>
         <search>
-          <query>
+          <query> <![CDATA[
             | inputlookup edr_health_results
             | sort _key
             | eval time=strptime(timestamp, "%Y-%m-%d %H:%M:%S")
             | chart avg(overall_score) AS "Overall Score" by time
-          </query>
+          ]]></query>
           <earliest>-7d</earliest>
           <latest>now</latest>
         </search>
@@ -83,7 +83,7 @@
       <title>Component Scores Over Time</title>
       <chart>
         <search>
-          <query>
+          <query> <![CDATA[
             | inputlookup edr_health_results
             | sort _key
             | eval time=strptime(timestamp, "%Y-%m-%d %H:%M:%S")
@@ -94,7 +94,7 @@
             | eval api_connectivity=component_scores.api_connectivity
             | eval search_commands=component_scores.search_commands
             | chart avg(app_status) AS "App Status" avg(credentials) AS "Credentials" avg(tenant_consoles) AS "Tenant Consoles" avg(kvstore) AS "KV Store" avg(api_connectivity) AS "API Connectivity" avg(search_commands) AS "Search Commands" by time
-          </query>
+          ]]></query>
           <earliest>-7d</earliest>
           <latest>now</latest>
         </search>
@@ -115,7 +115,7 @@
       <title>Search Command Status</title>
       <table>
         <search>
-          <query>
+          <query> <![CDATA[
             | inputlookup edr_health_results
             | sort -_key
             | head 1
@@ -123,7 +123,7 @@
             | eval agentdiscovery_registered=if(command_status.agentdiscovery==1, "✓ Registered", "✗ Not Registered")
             | table edrhunt_registered agentdiscovery_registered
             | rename edrhunt_registered as "EDRHunt Command", agentdiscovery_registered as "AgentDiscovery Command"
-          </query>
+          ]]></query>
           <earliest>-24h</earliest>
           <latest>now</latest>
         </search>
@@ -142,7 +142,7 @@
       <title>KV Store Status</title>
       <table>
         <search>
-          <query>
+          <query> <![CDATA[
             | inputlookup edr_health_results
             | sort -_key
             | head 1
@@ -150,7 +150,7 @@
             | eval agent_collection=if(isnotnull(agent_counts), "✓ Available", "✗ Not Available")
             | table kvstore_running agent_collection
             | rename kvstore_running as "KV Store Service", agent_collection as "Agent Collection"
-          </query>
+          ]]></query>
           <earliest>-24h</earliest>
           <latest>now</latest>
         </search>
@@ -171,7 +171,7 @@
       <title>Health Check History</title>
       <table>
         <search>
-          <query>
+          <query> <![CDATA[
             | inputlookup edr_health_results
             | sort -_key
             | eval Score=overall_score
@@ -181,7 +181,7 @@
             | eval "API Connections"=component_scores.api_connectivity
             | eval "Command Status"=component_scores.search_commands
             | table "Check Time" Score Status "App Version" "API Connections" "Command Status"
-          </query>
+          ]]></query>
           <earliest>-7d</earliest>
           <latest>now</latest>
         </search>
