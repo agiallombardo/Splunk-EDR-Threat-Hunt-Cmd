@@ -1,0 +1,24 @@
+indicator,type,actor,malware_family,confidence,reference,last_seen
+185.246.31.210,ipv4,APT28,CHOPSTICK,90,MITRE ATT-20220513,2023-06-10
+193.142.30.12,ipv4,LAPSUS$,RDPClip,85,INCIDENT-2023-0422,2023-05-22
+45.61.136.211,ipv4,DEV-0537,mimikatz,75,MS-THREAT-2023-06,2023-06-15
+89.44.9.243,ipv4,TA505,DRIDEX,95,INCIDENT-2023-0387,2023-04-30
+194.5.250.123,ipv4,Wizard Spider,BazarLoader,80,CSIRT-EU-2023-06-01,2023-06-01
+103.94.27.168,ipv4,Lazarus Group,AppleJeus,90,CISA-AA23-110A,2023-05-15
+102.219.34.128,ipv4,Unknown,BruteRatel,60,HONEYPOT-DETECTION,2023-06-18
+command-control-server.biz,domain,APT41,POISONPLUG,95,FBI-FLASH-CU-000188-MW,2023-05-30
+download.maliciousdomain.com,domain,FIN7,CARBANAK,90,JP-CERT-2023-05-11,2023-05-11
+cdn.attackerinfra.net,domain,Sandworm,EXARAMEL,85,CISA-ALERT-2023-06,2023-06-05
+secure-update.legit-looking-domain.net,domain,TA551,IcedID,80,DFIR-REPORT-2023,2023-04-22
+api.malicious-backend.com,domain,DEV-0270,GootLoader,70,MS-SECURITY-2023-04,2023-04-19
+cdn-delivery.network-infra.biz,domain,UNC2452,SUNBURST,98,INCIDENT-RESPONSE-2023-05,2023-05-05
+update-service.dynamicupdate.net,domain,TA551,QAKBOT,85,CERT-EU-2023-06-01,2023-06-01
+static.credential-stealer.cc,domain,TA577,FormBook,75,INCIDENT-2023-0512,2023-05-12
+https://malware-delivery.com/update.exe,url,Scattered Spider,SocGholish,90,ANALYTICAL-REPORT-2023-06,2023-06-08
+https://phishing-campaign.co/login/portal?target=organization,url,TA505,Silent Stealer,85,PHISHINSIGHT-2023-05,2023-05-25
+http://94.23.62.116/download/payload.bin,url,NOBELIUM,NativeZone,95,INCIDENT-2023-0498,2023-05-10
+https://fake-invoice.com/documents/INV-2023-06-123.xlsx,url,TA570,IcedID,90,MALWARE-ANALYSIS-06-2023,2023-06-12
+https://storage.googleapis.com.malicious-cdn.net/update.js,url,UNC3524,Gopuram,85,THREAT-REPORT-2023-05,2023-05-20
+http://drive.google.com.document-preview.info/share/document.docx,url,TA551,QAKBOT,80,IR-REPORT-JUN2023,2023-06-03
+https://legitimate-looking-site.com/wp-includes/backdoor.php,url,Water Selkie,ASPXSpy,75,ANALYTICAL-REPORT-542,2023-05-15
+http://attacker-controlled-server.info/gate.php,url,TA577,AgentTesla,85,INCIDENT-RESPONSE-JUN15,2023-06-15

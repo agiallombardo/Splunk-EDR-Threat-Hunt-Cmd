@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+<nav search_view="search" color="#007cc3">
+  <view name="edr_agent_overview" default="true" label="Agent Overview" />
+  <view name="edr_threat_hunting" label="Threat Hunting" />
+  <view name="edr_health_dashboard" label="Health Monitor" />
+  <view name="search" label="Advanced Search" />
+  <collection label="Settings">
+    <view name="setup" />
+    <view name="alerts" />
+    <view name="schedules" />
+    <a href="/manager/TA-EDR_Threat_Hunt_Cmd/apps/local/TA-EDR_Threat_Hunt_Cmd/setup">Configuration</a>
+    <a href="https://github.com/agiallombardo/Splunk-EDR-Threat-Hunt-Cmd" target="_blank">Documentation</a>
+  </collection>
+</nav>

@@ -1,0 +1,39 @@
+<%!
+import splunk.appserver.mrsparkle.lib.util as util
+%>
+
+<%
+app_name = cherrypy.request.path_info.split('/')[3]
+app_root = util.make_splunkhome_path(['etc', 'apps', app_name])
+%>
+
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <title>Setup</title>
+    <link rel="stylesheet" type="text/css" href="${make_url('/static/app/%s/setup.css' % app_name)}" />
+    <script type="text/javascript" src="${make_url('/static/app/%s/setup.js' % app_name)}"></script>
+</head>
+
+<body class="setup">
+    <div class="header">
+        <h1>Threat Hunt Command Setup</h1>
+    </div>
+
+    <div class="setup-info">
+        <h4>About This App</h4>
+        <p>This app provides a custom search command <code>edrhunt</code> for looking up Indicators of Compromise (IOCs) against threat APIs.</p>
+        <p>Complete the setup below to configure API credentials and settings.</p>
+    </div>
+
+    ${setup_form}
+
+    <div class="footer">
+        <p>
+            &copy; Anthony Giallombardo. All rights reserved. GNU GPL v3
+        </p>
+    </div>
+</body>
+</html>

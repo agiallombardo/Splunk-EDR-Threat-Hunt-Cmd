@@ -1,0 +1,633 @@
+<?xml version="1.0"?>
+<dashboard theme="dark" stylesheet="edr_dashboard.css">
+  <label>EDR Integration Health Monitor (Enhanced)</label>
+  <description>Enhanced health and status monitoring for EDR integrations</description>
+  
+  <row>
+    <panel>
+      <html>
+        <div id="statusBar" class="edr-status-bar">
+          <div class="status-message">Ready</div>
+          <div class="status-progress">
+            <div class="progress-bar"></div>
+          </div>
+        </div>
+        
+        <script>
+          require(['jquery', 'splunkjs/mvc/searchmanager', 'splunkjs/mvc/utils'], function($, SearchManager, utils) {
+            // Update status bar based on search status
+            $(document).on('search:start', function() {
+              $('#statusBar').attr('data-status', 'running');
+              $('#statusBar .status-message').text('Running query...');
+              $('#statusBar .progress-bar').css('width', '0%');
+            });
+            
+            $(document).on('search:progress', function(e, data) {
+              if (data && data.content && data.content.doneProgress) {
+                const progress = Math.round(data.content.doneProgress * 100);
+                $('#statusBar .progress-bar').css('width', progress + '%');
+                $('#statusBar .status-message').text(`Processing: ${progress}% complete`);
+              }
+            });
+            
+            $(document).on('search:done', function() {
+              $('#statusBar').attr('data-status', 'done');
+              $('#statusBar .status-message').text('Query completed');
+              $('#statusBar .progress-bar').css('width', '100%');
+              
+              // Fade out progress bar after 3 seconds
+              setTimeout(function() {
+                $('#statusBar .progress-bar').addClass('fade-out');
+              }, 3000);
+            });
+            
+            $(document).on('search:fail', function(e, data) {
+              $('#statusBar').attr('data-status', 'error');
+              $('#statusBar .status-message').text('Query failed: ' + (data && data.message ? data.message : 'Unknown error'));
+            });
+          });
+        </script>
+      </html>
+    </panel>
+  </row>
+  
+  <row>
+    <panel>
+      <title>Health Status</title>
+      <single>
+        <search>
+          <query>
+            | inputlookup edr_health_results
+            | sort -_key
+            | head 1
+            | eval icon=case(
+                health_status=="healthy", "✓",
+                health_status=="degraded", "⚠",
+                health_status=="unhealthy", "✗",
+                1==1, "?"
+              )
+            | eval status=upper(health_status)
+            | eval status_with_icon=icon." ".status
+            | table status_with_icon
+            | rename status_with_icon as "Health Status"
+          </query>
+          <earliest>-24h</earliest>
+          <latest>now</latest>
+        </search>
+        <option name="colorBy">value</option>
+        <option name="colorMode">block</option>
+        <option name="drilldown">none</option>
+        <option name="rangeColors">["0xdc4e41", "0xf8be34", "0x53a051"]</option>
+        <option name="rangeValues">[50, 80]</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="useColors">true</option>
+      </single>
+    </panel>
+    
+    <panel>
+      <title>Overall Health Score</title>
+      <single>
+        <search>
+          <query>
+            | inputlookup edr_health_results
+            | sort -_key
+            | head 1
+            | eval score=overall_score."/100"
+            | table score
+            | rename score as "Health Score"
+          </query>
+          <earliest>-24h</earliest>
+          <latest>now</latest>
+        </search>
+        <option name="colorBy">value</option>
+        <option name="colorMode">block</option>
+        <option name="drilldown">none</option>
+        <option name="rangeColors">["0xdc4e41", "0xf8be34", "0x53a051"]</option>
+        <option name="rangeValues">[50, 80]</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="useColors">true</option>
+      </single>
+    </panel>
+    
+    <panel>
+      <title>Last Check</title>
+      <single>
+        <search>
+          <query>
+            | inputlookup edr_health_results
+            | sort -_key
+            | head 1
+            | eval last_check=strftime(strptime(timestamp, "%Y-%m-%d %H:%M:%S"), "%Y-%m-%d %H:%M:%S")
+            | eval last_check=last_check." (".relative_time(now(), "-".round((now()-strptime(timestamp, "%Y-%m-%d %H:%M:%S")))."s").")"
+            | table last_check
+            | rename last_check as "Last Check"
+          </query>
+          <earliest>-24h</earliest>
+          <latest>now</latest>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+      </single>
+    </panel>
+    
+    <panel>
+      <title>App Version</title>
+      <single>
+        <search>
+          <query>
+            | inputlookup edr_health_results
+            | sort -_key
+            | head 1
+            | eval version=app_status.version
+            | table version
+            | rename version as "App Version"
+          </query>
+          <earliest>-24h</earliest>
+          <latest>now</latest>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+      </single>
+    </panel>
+  </row>
+  
+  <row>
+    <panel>
+      <title>Component Health Scores</title>
+      <chart>
+        <search>
+          <query>
+            | inputlookup edr_health_results
+            | sort -_key
+            | head 1
+            | eval app_status=component_scores.app_status
+            | eval credentials=component_scores.credentials
+            | eval tenant_consoles=component_scores.tenant_consoles
+            | eval kvstore=component_scores.kvstore
+            | eval api_connectivity=component_scores.api_connectivity
+            | eval search_commands=component_scores.search_commands
+            | table app_status credentials tenant_consoles kvstore api_connectivity search_commands
+            | transpose
+            | rename column as "Component", "row 1" as "Score"
+            | eval Component=case(
+                column=="app_status", "App Status",
+                column=="credentials", "Credentials",
+                column=="tenant_consoles", "Tenant Consoles",
+                column=="kvstore", "KV Store",
+                column=="api_connectivity", "API Connectivity",
+                column=="search_commands", "Search Commands",
+                true(), column
+              )
+          </query>
+          <earliest>-24h</earliest>
+          <latest>now</latest>
+        </search>
+        <option name="charting.chart">bar</option>
+        <option name="charting.chart.barBase">bottom</option>
+        <option name="charting.chart.barDirection">bar</option>
+        <option name="charting.drilldown">none</option>
+        <option name="charting.legend.placement">none</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="charting.axisY.maximumNumber">100</option>
+        <option name="charting.fieldColors">{"Score": 0x53a051}</option>
+        <option name="charting.chart.showDataLabels">true</option>
+      </chart>
+    </panel>
+    
+    <panel>
+      <title>Health Score Trend</title>
+      <chart>
+        <search>
+          <query>
+            | inputlookup edr_health_results
+            | sort _key
+            | eval time=strptime(timestamp, "%Y-%m-%d %H:%M:%S")
+            | chart avg(overall_score) AS "Overall Score" by time
+          </query>
+          <earliest>-7d</earliest>
+          <latest>now</latest>
+        </search>
+        <option name="charting.axisTitleX.visibility">visible</option>
+        <option name="charting.axisTitleY.visibility">visible</option>
+        <option name="charting.axisTitleY.text">Score</option>
+        <option name="charting.chart">line</option>
+        <option name="charting.drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="charting.chart.showMarkers">1</option>
+        <option name="charting.fieldColors">{"Overall Score": 0x53a051}</option>
+        <option name="charting.lineWidth">2</option>
+      </chart>
+    </panel>
+  </row>
+  
+  <row>
+    <panel>
+      <title>Component Scores Over Time</title>
+      <chart>
+        <search>
+          <query>
+            | inputlookup edr_health_results
+            | sort _key
+            | eval time=strptime(timestamp, "%Y-%m-%d %H:%M:%S")
+            | eval app_status=component_scores.app_status
+            | eval credentials=component_scores.credentials
+            | eval tenant_consoles=component_scores.tenant_consoles
+            | eval kvstore=component_scores.kvstore
+            | eval api_connectivity=component_scores.api_connectivity
+            | eval search_commands=component_scores.search_commands
+            | chart avg(app_status) AS "App Status" avg(credentials) AS "Credentials" avg(tenant_consoles) AS "Tenant Consoles" avg(kvstore) AS "KV Store" avg(api_connectivity) AS "API Connectivity" avg(search_commands) AS "Search Commands" by time
+          </query>
+          <earliest>-7d</earliest>
+          <latest>now</latest>
+        </search>
+        <option name="charting.axisTitleX.visibility">visible</option>
+        <option name="charting.axisTitleY.visibility">visible</option>
+        <option name="charting.axisTitleY.text">Score</option>
+        <option name="charting.chart">line</option>
+        <option name="charting.drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="charting.chart.showMarkers">0</option>
+        <option name="charting.legend.placement">right</option>
+      </chart>
+    </panel>
+  </row>
+  
+  <row>
+    <panel>
+      <title>Provider Status</title>
+      <table>
+        <search>
+          <query>
+            | inputlookup edr_health_results
+            | sort -_key
+            | head 1
+            | eval crowdstrike_creds=credential_counts.crowdstrike
+            | eval sentinelone_creds=credential_counts.sentinelone
+            | eval defender_creds=credential_counts.defender
+            | mvexpand api_status
+            | eval tenant=mvindex(split(mvindex(split(api_status, "="), 0), "\""), 1)
+            | eval provider_status=mvindex(split(api_status, "="), 1)
+            | fields tenant provider_status
+            | mvexpand provider_status
+            | eval provider=mvindex(split(mvindex(split(provider_status, ":"), 0), "\""), 1)
+            | eval status_data=mvindex(split(provider_status, ":"), 1)
+            | eval ok_count=mvindex(split(mvindex(split(mvindex(split(status_data, ","), 1), ":"), 1), "}"), 0)
+            | eval error_count=mvindex(split(mvindex(split(mvindex(split(status_data, ","), 2), ":"), 1), "}"), 0)
+            | eval total_count=mvindex(split(mvindex(split(mvindex(split(status_data, ","), 3), ":"), 1), "}"), 0)
+            | eval status=case(
+                total_count==0, "Not Configured",
+                ok_count==total_count, "✓ All Connected",
+                ok_count > 0, "⚠ Partially Connected (".ok_count."/".total_count.")",
+                ok_count==0, "✗ Not Connected",
+                1==1, "Unknown"
+              )
+            | table tenant provider status
+            | rename tenant as "Tenant", provider as "Provider", status as "Status"
+          </query>
+          <earliest>-24h</earliest>
+          <latest>now</latest>
+        </search>
+        <option name="count">20</option>
+        <option name="drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+        <format field="Status" type="color">
+          <colorPalette type="map">{"✓ All Connected":#53a051,"⚠ Partially Connected":#f8be34,"✗ Not Connected":#dc4e41,"Not Configured":#999999,"Unknown":#999999}</colorPalette>
+        </format>
+      </table>
+    </panel>
+    
+    <panel>
+      <title>Agent Counts by Provider and Tenant</title>
+      <chart>
+        <search>
+          <query>
+            | inputlookup edr_health_results
+            | sort -_key
+            | head 1
+            | mvexpand agent_counts
+            | eval provider=mvindex(split(mvindex(split(agent_counts, "="), 0), "\""), 1)
+            | eval tenant_counts=mvindex(split(agent_counts, "="), 1)
+            | fields provider tenant_counts
+            | mvexpand tenant_counts
+            | eval tenant=mvindex(split(mvindex(split(tenant_counts, ":"), 0), "\""), 1)
+            | eval count=mvindex(split(mvindex(split(tenant_counts, ":"), 1), "}"), 0)
+            | stats sum(count) AS "Agent Count" by provider tenant
+            | rename provider as "Provider", tenant as "Tenant"
+          </query>
+          <earliest>-24h</earliest>
+          <latest>now</latest>
+        </search>
+        <option name="charting.chart">column</option>
+        <option name="charting.chart.stackMode">stacked</option>
+        <option name="charting.drilldown">none</option>
+        <option name="charting.legend.placement">right</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="charting.fieldColors">{"crowdstrike": "#F82B60", "sentinelone": "#00BFB3", "defender": "#0078D4"}</option>
+      </chart>
+    </panel>
+  </row>
+  
+  <row>
+    <panel>
+      <title>Search Command Status</title>
+      <table>
+        <search>
+          <query>
+            | inputlookup edr_health_results
+            | sort -_key
+            | head 1
+            | eval edrhunt_registered=if(command_status.edrhunt==1, "✓ Registered", "✗ Not Registered")
+            | eval agentdiscovery_registered=if(command_status.agentdiscovery==1, "✓ Registered", "✗ Not Registered")
+            | table edrhunt_registered agentdiscovery_registered
+            | rename edrhunt_registered as "EDRHunt Command", agentdiscovery_registered as "AgentDiscovery Command"
+          </query>
+          <earliest>-24h</earliest>
+          <latest>now</latest>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+        <format field="EDRHunt Command" type="color">
+          <colorPalette type="map">{"✓ Registered":#53a051,"✗ Not Registered":#dc4e41}</colorPalette>
+        </format>
+        <format field="AgentDiscovery Command" type="color">
+          <colorPalette type="map">{"✓ Registered":#53a051,"✗ Not Registered":#dc4e41}</colorPalette>
+        </format>
+      </table>
+    </panel>
+    
+    <panel>
+      <title>KV Store Status</title>
+      <table>
+        <search>
+          <query>
+            | inputlookup edr_health_results
+            | sort -_key
+            | head 1
+            | eval kvstore_running=if(kvstore_status=="ready", "✓ Running", "✗ Not Running")
+            | eval agent_collection=if(isnotnull(agent_counts), "✓ Available", "✗ Not Available")
+            | table kvstore_running agent_collection
+            | rename kvstore_running as "KV Store Service", agent_collection as "Agent Collection"
+          </query>
+          <earliest>-24h</earliest>
+          <latest>now</latest>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+        <format field="KV Store Service" type="color">
+          <colorPalette type="map">{"✓ Running":#53a051,"✗ Not Running":#dc4e41}</colorPalette>
+        </format>
+        <format field="Agent Collection" type="color">
+          <colorPalette type="map">{"✓ Available":#53a051,"✗ Not Available":#dc4e41}</colorPalette>
+        </format>
+      </table>
+    </panel>
+  </row>
+  
+  <row>
+    <panel>
+      <title>Health Check History</title>
+      <table>
+        <search>
+          <query>
+            | inputlookup edr_health_results
+            | sort -_key
+            | eval Score=overall_score
+            | eval Status=upper(health_status)
+            | eval "Check Time"=timestamp
+            | eval "App Version"=app_status.version
+            | eval "API Connections"=component_scores.api_connectivity
+            | eval "Command Status"=component_scores.search_commands
+            | table "Check Time" Score Status "App Version" "API Connections" "Command Status"
+          </query>
+          <earliest>-7d</earliest>
+          <latest>now</latest>
+        </search>
+        <option name="count">10</option>
+        <option name="dataOverlayMode">none</option>
+        <option name="drilldown">none</option>
+        <option name="percentagesRow">false</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="rowNumbers">true</option>
+        <option name="totalsRow">false</option>
+        <option name="wrap">true</option>
+        <format field="Status" type="color">
+          <colorPalette type="map">{"HEALTHY":#53a051,"DEGRADED":#f8be34,"UNHEALTHY":#dc4e41}</colorPalette>
+        </format>
+        <format field="Score" type="color">
+          <colorPalette type="range">{"ranges":[[0,50,"#dc4e41"],[50,80,"#f8be34"],[80,101,"#53a051"]]}</colorPalette>
+        </format>
+      </table>
+    </panel>
+  </row>
+  
+  <row>
+    <panel>
+      <title>Credential Status by Provider</title>
+      <chart>
+        <search>
+          <query>
+            | inputlookup edr_health_results
+            | sort -_key
+            | head 1
+            | eval crowdstrike=credential_counts.crowdstrike
+            | eval sentinelone=credential_counts.sentinelone
+            | eval defender=credential_counts.defender
+            | table crowdstrike sentinelone defender
+            | transpose
+            | rename column as "Provider", "row 1" as "Credentials"
+            | eval Provider=case(
+                column=="crowdstrike", "CrowdStrike",
+                column=="sentinelone", "SentinelOne",
+                column=="defender", "Microsoft Defender",
+                true(), column
+              )
+          </query>
+          <earliest>-24h</earliest>
+          <latest>now</latest>
+        </search>
+        <option name="charting.chart">column</option>
+        <option name="charting.drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="charting.chart.showDataLabels">true</option>
+        <option name="charting.legend.placement">none</option>
+        <option name="charting.fieldColors">{"Credentials": "#4a86e8"}</option>
+      </chart>
+    </panel>
+  </row>
+  
+  <row>
+    <panel>
+      <title>Run Health Check</title>
+      <input type="dropdown" token="collection_name">
+        <label>Results Collection</label>
+        <choice value="edr_health_results">edr_health_results</choice>
+        <default>edr_health_results</default>
+      </input>
+      <html>
+        <div class="health-check-panel">
+          <button id="runHealthCheck" class="btn btn-primary">Run Health Check Now</button>
+          <div id="healthCheckStatus" class="status-message"></div>
+          
+          <div class="last-run-info">
+            <script>
+              require(['jquery', 'splunkjs/mvc/searchmanager', 'splunkjs/mvc/utils'], function($, SearchManager, utils) {
+                // Get last health check time
+                var lastRunSearch = new SearchManager({
+                  id: 'last-run-search',
+                  search: '| inputlookup edr_health_results | sort -_key | head 1 | eval last_run=strftime(strptime(timestamp, "%Y-%m-%d %H:%M:%S"), "%Y-%m-%d %H:%M:%S") | eval last_run=last_run." (".relative_time(now(), "-".round((now()-strptime(timestamp, "%Y-%m-%d %H:%M:%S")))."s").")" | table last_run',
+                  earliest_time: '-24h',
+                  latest_time: 'now',
+                  preview: false
+                });
+                
+                lastRunSearch.on('search:done', function() {
+                  lastRunSearch.data('results').once('data', function() {
+                    var results = lastRunSearch.data('results').data().results;
+                    if (results && results.length > 0) {
+                      $('.last-run-info').html('<div class="info-text">Last health check: ' + results[0].last_run + '</div>');
+                    }
+                  });
+                });
+                
+                // Run health check button
+                $('#runHealthCheck').on('click', function() {
+                  $('#healthCheckStatus').html('<div class="loading">Running health check...</div>');
+                  
+                  // Make REST API call to run health check
+                  $.ajax({
+                    url: utils.make_url('/services/edr/execute'),
+                    type: 'POST',
+                    data: JSON.stringify({
+                      command: 'health_check',
+                      parameters: {
+                        collection: $('#collection_name').val()
+                      }
+                    }),
+                    contentType: 'application/json',
+                    success: function(data) {
+                      $('#healthCheckStatus').html('<div class="success">Health check completed successfully</div>');
+                      
+                      // Show refresh button
+                      $('#healthCheckStatus').append('<button id="refreshDashboard" class="btn btn-success">Refresh Dashboard</button>');
+                      $('#refreshDashboard').on('click', function() {
+                        window.location.reload();
+                      });
+                      
+                      // Auto refresh after 5 seconds
+                      setTimeout(function() {
+                        window.location.reload();
+                      }, 5000);
+                    },
+                    error: function(jqXHR, textStatus, errorThrown) {
+                      $('#healthCheckStatus').html('<div class="error">Error running health check: ' + errorThrown + '</div>');
+                    }
+                  });
+                });
+              });
+            </script>
+          </div>
+        </div>
+      </html>
+    </panel>
+  </row>
+  
+  <row>
+    <panel>
+      <title>Health Check Details</title>
+      <html>
+        <div class="details-panel">
+          <div class="details-tabs">
+            <ul class="tab-list">
+              <li class="tab active" data-tab="overview">Overview</li>
+              <li class="tab" data-tab="troubleshooting">Troubleshooting</li>
+              <li class="tab" data-tab="commands">Common Commands</li>
+            </ul>
+            
+            <div class="tab-content">
+              <div class="tab-pane active" id="overview">
+                <h3>Health Check Components</h3>
+                <p>The health check evaluates the following components:</p>
+                <ul>
+                  <li><strong>App Status</strong>: Verifies the app is properly installed and configured</li>
+                  <li><strong>Credentials</strong>: Checks that API credentials are properly configured</li>
+                  <li><strong>Tenant Consoles</strong>: Validates tenant and console configurations</li>
+                  <li><strong>KV Store</strong>: Ensures KV Store is running and collections are available</li>
+                  <li><strong>API Connectivity</strong>: Tests connections to EDR provider APIs</li>
+                  <li><strong>Search Commands</strong>: Verifies custom search commands are registered</li>
+                </ul>
+                
+                <h3>Health Score Calculation</h3>
+                <p>The overall health score is a weighted average of the component scores:</p>
+                <ul>
+                  <li>App Status: 15%</li>
+                  <li>Credentials: 20%</li>
+                  <li>Tenant Consoles: 15%</li>
+                  <li>KV Store: 15%</li>
+                  <li>API Connectivity: 25%</li>
+                  <li>Search Commands: 10%</li>
+                </ul>
+              </div>
+              
+              <div class="tab-pane" id="troubleshooting">
+                <h3>Troubleshooting Steps</h3>
+                <ol>
+                  <li><strong>App Status Issues</strong>: Verify TA-EDR_Threat_Hunt_Cmd is properly installed and enabled in Splunk Web under "Manage Apps".</li>
+                  <li><strong>Credential Issues</strong>: Check that API credentials are properly configured under "Settings > Passwords" with the correct naming convention.</li>
+                  <li><strong>Tenant/Console Issues</strong>: Verify configuration in consoles.conf and tenants.conf in the app's local directory.</li>
+                  <li><strong>KV Store Issues</strong>: Ensure KV Store is running with "| rest /services/server/status/kvstore-status".</li>
+                  <li><strong>API Connectivity Issues</strong>: Check network connectivity from Splunk to EDR provider APIs and verify credentials are valid.</li>
+                  <li><strong>Search Command Issues</strong>: Verify the search commands are properly registered in commands.conf and the app is deployed to search heads.</li>
+                </ol>
+                
+                <h3>Common Issues</h3>
+                <ul>
+                  <li><strong>Low API Connectivity Score</strong>: Check firewall rules, network connectivity, and credential validity</li>
+                  <li><strong>Missing Credentials</strong>: Ensure credentials are configured with the correct naming convention (provider_tenant_console)</li>
+                  <li><strong>KV Store Issues</strong>: Restart the KV Store service using "splunk restart kvstore" on the command line</li>
+                  <li><strong>Search Command Not Found</strong>: Verify commands.conf is properly configured and distributed to search heads</li>
+                </ul>
+              </div>
+              
+              <div class="tab-pane" id="commands">
+                <h3>Common Commands</h3>
+                <ul>
+                  <li><strong>Check KV Store Status:</strong>
+                    <pre>| rest /services/server/status/kvstore-status</pre>
+                  </li>
+                  <li><strong>View Agent Collection:</strong>
+                    <pre>| inputlookup edr_agents | stats count by provider tenant</pre>
+                  </li>
+                  <li><strong>Test EDRHunt Command:</strong>
+                    <pre>| makeresults | eval agent_id="test" | edrhunt provider="crowdstrike" data_type="summary" debug=true</pre>
+                  </li>
+                  <li><strong>Test AgentDiscovery Command:</strong>
+                    <pre>| agentdiscovery provider="crowdstrike" tenant="default" operation="list" debug=true</pre>
+                  </li>
+                  <li><strong>View Health Results:</strong>
+                    <pre>| inputlookup edr_health_results | sort -_key | head 1 | fields timestamp overall_score health_status component_scores.*</pre>
+                  </li>
+                  <li><strong>Check Credentials:</strong>
+                    <pre>| rest /services/admin/passwords | search realm="*crowdstrike*" OR realm="*sentinelone*" OR realm="*defender*"</pre>
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+          
+          <script>
+            $(document).ready(function() {
+              // Tab functionality
+              $('.tab').on('click', function() {
+                $('.tab').removeClass('active');
+                $('.tab-pane').removeClass('active');
+                
+                $(this).addClass('active');
+                $('#' + $(this).data('tab')).addClass('active');
+              });
+            });
+          </script>
+        </div>
+      </html>
+    </panel>
+  </row>
+</dashboard>

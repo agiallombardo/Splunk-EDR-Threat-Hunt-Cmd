@@ -1,0 +1,21 @@
+indicator,type,description,priority,source,date_added
+44d88612fea8a8f36de82e1278abb02f,md5,Suspected Emotet Dropper,high,OSINT,2023-03-15
+5632105a45fb14e2d98bc5b1c5b4b27716e759f2,sha1,Cobalt Strike Beacon,critical,Incident Response,2023-04-20
+275a021bbfb6489e54d471899f7db9d1663fc695ec2fe2a2c4538aabf651fd0f,sha256,Ransomware Encryptor,critical,Sandbox Analysis,2023-05-01
+185.246.31.210,ipv4,APT C2 Server,high,Threat Feed,2023-03-25
+45.61.136.211,ipv4,Botnet Distribution Node,medium,Network Logs,2023-06-10
+102.219.34.128,ipv4,Scanning Activity,low,Honeypot,2023-06-22
+download.maliciousdomain.com,domain,Malware Distribution,high,Incident Response,2023-04-15
+cdn.attackerinfra.net,domain,C2 Infrastructure,critical,Threat Intelligence,2023-05-12
+secure-update.legit-looking-domain.net,domain,Phishing Campaign,medium,User Report,2023-06-05
+https://malware-delivery.com/update.exe,url,Malware Download URL,high,Email Analysis,2023-04-10
+https://phishing-campaign.co/login/portal?target=organization,url,Credential Harvester,high,Phishing Kit,2023-05-20
+http://94.23.62.116/download/payload.bin,url,Malicious Binary,critical,Sandbox Detonation,2023-06-15
+b10a36bf8bec4d99893e969f1dae9579,md5,Information Stealer,medium,Sandbox Analysis,2023-06-01
+ce76c7f8b1d90a57ca5289090bcb3c2ae53bdb40,sha1,Backdoor Implant,high,MDR Service,2023-05-10
+6adfb183a4a2c94a2f92dab5ade762a47889a5a1e5462cb3d0b33c839d84d700,sha256,Supply Chain Compromise,critical,Forensic Analysis,2023-03-10
+172.94.41.2,ipv4,TOR Exit Node,low,Network Logs,2023-04-05
+93.184.216.34,ipv4,Brute Force Source,medium,SIEM Alerts,2023-05-25
+attacker-controlled-server.info,domain,Browser Exploit,high,IR Engagement,2023-06-12
+command-control-server.biz,domain,Lateral Movement Infrastructure,critical,Threat Hunt,2023-04-22
+https://fake-invoice.com/documents/INV-2023-06-123.xlsx,url,Malicious Office Document,high,Email Security,2023-06-08
