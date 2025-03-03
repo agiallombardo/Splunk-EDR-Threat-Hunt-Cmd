@@ -1255,7 +1255,7 @@ require([
             }
             
             // Add timestamps if available
-            if (nodeData.data && nodeData.data.timestamp) {
+            if (nodeData.data &amp;&amp; nodeData.data.timestamp) {
                 content.append('div')
                     .attr('class', 'details-panel-item')
                     .html(`<span class="details-panel-label">Timestamp:</span> ${nodeData.data.timestamp}`);

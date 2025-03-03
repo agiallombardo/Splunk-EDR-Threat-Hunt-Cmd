@@ -1,0 +1,720 @@
+<?xml version="1.1" encoding="UTF-8"?>
+<dashboard version="1.1" theme="dark" stylesheet="edr_dashboard.css">
+  <label>EDR Process Explorer</label>
+  <description>Process execution information from EDR agents</description>
+  
+  <fieldset submitButton="true" autoRun="false">
+    <input type="dropdown" token="tenant_param">
+      <label>Tenant</label>
+      <search>
+        <query>
+          | inputlookup edr_agents
+          | stats count by tenant
+          | sort tenant
+        </query>
+      </search>
+      <fieldForLabel>tenant</fieldForLabel>
+      <fieldForValue>tenant</fieldForValue>
+      <default>default</default>
+      <choice value="">All Tenants</choice>
+    </input>
+    
+    <input type="dropdown" token="provider_param">
+      <label>Provider</label>
+      <choice value="crowdstrike">CrowdStrike</choice>
+      <choice value="sentinelone">SentinelOne</choice>
+      <choice value="defender">Microsoft Defender</choice>
+      <default>crowdstrike</default>
+    </input>
+    
+    <input type="dropdown" token="time_range_param">
+      <label>Time Range</label>
+      <choice value="1h">1 hour</choice>
+      <choice value="6h">6 hours</choice>
+      <choice value="12h">12 hours</choice>
+      <choice value="24h">24 hours</choice>
+      <choice value="3d">3 days</choice>
+      <choice value="7d">7 days</choice>
+      <default>24h</default>
+    </input>
+    
+    <input type="text" token="query_param" searchWhenChanged="false">
+      <label>Query Filter (Provider-specific syntax)</label>
+      <default></default>
+      <initialValue></initialValue>
+    </input>
+    
+    <input type="multiselect" token="os_platform_token" searchWhenChanged="false">
+      <label>OS Platform</label>
+      <search>
+        <query>
+          | inputlookup edr_agents
+          | stats count by os_platform
+          | sort os_platform
+        </query>
+      </search>
+      <fieldForLabel>os_platform</fieldForLabel>
+      <fieldForValue>os_platform</fieldForValue>
+      <delimiter> OR </delimiter>
+      <valueSuffix>"</valueSuffix>
+      <valuePrefix>os_platform="</valuePrefix>
+      <default>*</default>
+      <choice value="*">All</choice>
+    </input>
+    
+    <input type="text" token="hostname_token" searchWhenChanged="false">
+      <label>Hostname (regex)</label>
+      <default>*</default>
+      <prefix>hostname="</prefix>
+      <suffix>"</suffix>
+    </input>
+    
+    <input type="dropdown" token="limit_token">
+      <label>Maximum Agents to Query</label>
+      <choice value="10">10</choice>
+      <choice value="20">20</choice>
+      <choice value="50">50</choice>
+      <default>10</default>
+    </input>
+    
+    <input type="dropdown" token="threads_param">
+      <label>Threads</label>
+      <choice value="1">1</choice>
+      <choice value="2">2</choice>
+      <choice value="4">4</choice>
+      <choice value="8">8</choice>
+      <default>4</default>
+    </input>
+  </fieldset>
+
+  <row>
+    <panel>
+      <html>
+        <div id="statusBar" class="edr-status-bar">
+          <div class="status-message">Ready to execute search</div>
+          <div class="status-progress">
+            <div class="progress-bar"></div>
+          </div>
+        </div>
+        
+        <script>
+          require(['jquery', 'splunkjs/mvc/searchmanager', 'splunkjs/mvc/utils'], function($, SearchManager, utils) {
+            // Update status bar based on search status
+            $(document).on('search:start', function() {
+              $('#statusBar').attr('data-status', 'running');
+              $('#statusBar .status-message').text('Running query...');
+              $('#statusBar .progress-bar').css('width', '0%');
+            });
+            
+            $(document).on('search:progress', function(e, data) {
+              if (data &amp;&amp; data.content && data.content.doneProgress) {
+                const progress = Math.round(data.content.doneProgress * 100);
+                $('#statusBar .progress-bar').css('width', progress + '%');
+                $('#statusBar .status-message').text(`Processing: ${progress}% complete`);
+              }
+            });
+            
+            $(document).on('search:done', function() {
+              $('#statusBar').attr('data-status', 'done');
+              $('#statusBar .status-message').text('Query completed');
+              $('#statusBar .progress-bar').css('width', '100%');
+              
+              // Fade out progress bar after 3 seconds
+              setTimeout(function() {
+                $('#statusBar .progress-bar').addClass('fade-out');
+              }, 3000);
+            });
+            
+            $(document).on('search:fail', function(e, data) {
+              $('#statusBar').attr('data-status', 'error');
+              $('#statusBar .status-message').text('Query failed: ' + (data &amp;&amp; data.message ? data.message : 'Unknown error'));
+            });
+          });
+        </script>
+      </html>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Execution Summary</title>
+      <single>
+        <search>
+          <query>
+            | inputlookup edr_agents
+            | search 
+              $os_platform_token$
+              $hostname_token$
+            | head $limit_token$
+            | stats count as "Agent Count"
+          </query>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="rangeColors">["0x53a051", "0x0877a6", "0xf8be34", "0xf1813f", "0xdc4e41"]</option>
+        <option name="underLabel">Agents Selected</option>
+        <option name="colorBy">value</option>
+      </single>
+    </panel>
+    
+    <panel>
+      <title>Process Execution Summary</title>
+      <single>
+        <search>
+          <query>
+            | inputlookup edr_agents
+            | search 
+              $os_platform_token$
+              $hostname_token$
+            | head $limit_token$
+            | edrhunt 
+              provider=$provider_param$ 
+              tenant=$tenant_param$ 
+              data_type=processes 
+              time_range=$time_range_param$ 
+              query=$query_param$ 
+              threads=$threads_param$
+              include_raw=false
+              debug=false
+            | stats 
+              sum(edr_process_count) as "Total Processes" 
+              dc(edr_hostname) as "Hosts with Matches"
+          </query>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="rangeColors">["0x53a051", "0x0877a6", "0xf8be34", "0xf1813f", "0xdc4e41"]</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="colorBy">value</option>
+      </single>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Process Tree Visualization</title>
+      <html>
+        <div id="process-tree-viz" style="width:100%; height:600px;"></div>
+        
+        <script>
+          require(['jquery', 'splunkjs/mvc/searchmanager', 'splunkjs/mvc/utils', 'processTree'], 
+            function($, SearchManager, utils, ProcessTree) {
+              // Create search manager for process data
+              const processSearch = new SearchManager({
+                id: 'process-tree-search',
+                search: '| inputlookup edr_agents | search $os_platform_token$ $hostname_token$ | head $limit_token$ | edrhunt provider=$provider_param$ tenant=$tenant_param$ data_type=processes time_range=$time_range_param$ query=$query_param$ threads=$threads_param$ include_raw=true debug=false',
+                earliest_time: '-24h@h',
+                latest_time: 'now',
+                preview: false,
+                cache: false
+              });
+              
+              // Initialize process tree visualization
+              const vizElement = document.getElementById('process-tree-viz');
+              const processTree = ProcessTree.initialize(vizElement, {
+                colorByProvider: false,
+                showCommandLine: true,
+                theme: 'dark',
+                initialCollapseDepth: 2
+              });
+              
+              // Update visualization when search completes
+              processSearch.on('search:done', function(properties) {
+                processSearch.data('results').once('data', function() {
+                  // Get results
+                  const results = processSearch.data('results').data().results;
+                  
+                  if (results && results.length > 0) {
+                    // Update visualization
+                    processTree.updateData(results);
+                  } else {
+                    // No results
+                    $(vizElement).html('<div class="empty-results">No process data found. Try adjusting your search parameters.</div>');
+                  }
+                });
+              });
+              
+              // Handle search errors
+              processSearch.on('search:error', function(properties) {
+                $(vizElement).html('<div class="search-error">Error retrieving process data: ' + properties.message + '</div>');
+              });
+            }
+          );
+        </script>
+      </html>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Process Names (Top 10)</title>
+      <chart>
+        <search>
+          <query>
+            | inputlookup edr_agents
+            | search 
+              $os_platform_token$
+              $hostname_token$
+            | head $limit_token$
+            | edrhunt 
+              provider=$provider_param$ 
+              tenant=$tenant_param$ 
+              data_type=processes 
+              time_range=$time_range_param$ 
+              query=$query_param$ 
+              threads=$threads_param$
+              include_raw=false
+              debug=false
+            | search edr_process_match=true
+            | mvexpand edr_process_names
+            | stats count by edr_process_names
+            | sort -count
+            | head 10
+          </query>
+        </search>
+        <option name="charting.chart">bar</option>
+        <option name="charting.drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="charting.chart.showDataLabels">all</option>
+        <option name="charting.legend.placement">none</option>
+      </chart>
+    </panel>
+    
+    <panel>
+      <title>Process Command Lines</title>
+      <table>
+        <search>
+          <query>
+            | inputlookup edr_agents
+            | search 
+              $os_platform_token$
+              $hostname_token$
+            | head $limit_token$
+            | edrhunt 
+              provider=$provider_param$ 
+              tenant=$tenant_param$ 
+              data_type=processes 
+              time_range=$time_range_param$ 
+              query=$query_param$ 
+              threads=$threads_param$
+              include_raw=false
+              debug=false
+            | search edr_process_match=true
+            | mvexpand edr_command_lines
+            | table edr_hostname edr_command_lines edr_timestamp
+            | rename edr_hostname as "Hostname" edr_command_lines as "Command Line" edr_timestamp as "Timestamp"
+          </query>
+        </search>
+        <option name="count">10</option>
+        <option name="dataOverlayMode">none</option>
+        <option name="drilldown">none</option>
+        <option name="rowNumbers">false</option>
+        <option name="wrap">true</option>
+        <option name="refresh.display">progressbar</option>
+      </table>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Event Timeline</title>
+      <viz type="timeline_app.timeline">
+        <search>
+          <query>
+            | inputlookup edr_agents
+            | search 
+              $os_platform_token$
+              $hostname_token$
+            | head $limit_token$
+            | edrhunt 
+              provider=$provider_param$ 
+              tenant=$tenant_param$ 
+              data_type=processes
+              time_range=$time_range_param$ 
+              query=$query_param$ 
+              threads=$threads_param$
+              include_raw=false
+              debug=false
+            | eval timestamp=coalesce(edr_timestamp, _time)
+            | eval category="Process"
+            | eval title=mvindex(edr_process_names, 0)
+            | eval description=mvindex(edr_command_lines, 0)
+            | eval host=edr_hostname
+            | table timestamp category title description host
+          </query>
+          <earliest>-24h@h</earliest>
+          <latest>now</latest>
+        </search>
+        <option name="timeline_app.timeline.axisTimeFormat">SECONDS</option>
+        <option name="timeline_app.timeline.colorMode">categorical</option>
+        <option name="timeline_app.timeline.maxColor">#DA5C5C</option>
+        <option name="timeline_app.timeline.minColor">#FFE8E8</option>
+        <option name="timeline_app.timeline.numOfBins">6</option>
+        <option name="timeline_app.timeline.showHeader">true</option>
+        <option name="timeline_app.timeline.timeAxisScale">linear</option>
+        <option name="timeline_app.timeline.tooltipTimeFormat">SECONDS</option>
+        <option name="timeline_app.timeline.useColors">true</option>
+        <option name="timeline_app.timeline.useDefaultRowName">true</option>
+        <option name="trellis.enabled">0</option>
+        <option name="trellis.scales.shared">1</option>
+        <option name="trellis.size">medium</option>
+      </viz>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Result Distribution by Host</title>
+      <chart>
+        <search>
+          <query>
+            | inputlookup edr_agents
+            | search 
+              $os_platform_token$
+              $hostname_token$
+            | head $limit_token$
+            | edrhunt 
+              provider=$provider_param$ 
+              tenant=$tenant_param$ 
+              data_type=processes 
+              time_range=$time_range_param$ 
+              query=$query_param$ 
+              threads=$threads_param$
+              include_raw=false
+              debug=false
+            | eval has_match = edr_process_match=true
+            | where has_match="true"
+            | stats count by edr_hostname
+            | sort -count
+            | head 20
+          </query>
+        </search>
+        <option name="charting.chart">bar</option>
+        <option name="charting.drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="charting.chart.showDataLabels">all</option>
+        <option name="charting.legend.placement">none</option>
+      </chart>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Export Results</title>
+      <input type="dropdown" token="export_format">
+        <label>Export Format</label>
+        <choice value="csv">CSV</choice>
+        <choice value="json">JSON</choice>
+        <choice value="xml">XML</choice>
+        <default>csv</default>
+      </input>
+      <html>
+        <div class="export-controls">
+          <button id="exportBtn" class="btn btn-primary">Export Results</button>
+          <div id="exportStatus"></div>
+        </div>
+        
+        <script>
+          require(['jquery', 'splunkjs/mvc/searchmanager', 'splunkjs/mvc/utils'], function($, SearchManager, utils) {
+            $('#exportBtn').on('click', function() {
+              // Show loading indicator
+              $('#exportStatus').html('<div class="loading">Preparing export...</div>');
+              
+              // Create export search
+              const exportSearch = new SearchManager({
+                id: 'export-search',
+                search: '| inputlookup edr_agents | search $os_platform_token$ $hostname_token$ | head $limit_token$ | edrhunt provider=$provider_param$ tenant=$tenant_param$ data_type=processes time_range=$time_range_param$ query=$query_param$ threads=$threads_param$ include_raw=true debug=false',
+                earliest_time: '-24h@h',
+                latest_time: 'now',
+                preview: false,
+                cache: false
+              });
+              
+              // On search complete, export results
+              exportSearch.on('search:done', function() {
+                // Get results
+                exportSearch.data('results').once('data', function() {
+                  const results = exportSearch.data('results').data().results;
+                  
+                  if (results && results.length > 0) {
+                    // Format depends on selected option
+                    const format = $('#export_format').val();
+                    
+                    // Format data for export
+                    let exportData;
+                    const filename = 'edr_process_results_' + new Date().toISOString().replace(/:/g, '-') + '.' + format;
+                    
+                    if (format === 'json') {
+                      exportData = JSON.stringify(results, null, 2);
+                      downloadFile(exportData, filename, 'application/json');
+                    } else if (format === 'xml') {
+                      exportData = jsonToXml(results);
+                      downloadFile(exportData, filename, 'application/xml');
+                    } else {
+                      // Default to CSV
+                      exportData = jsonToCsv(results);
+                      downloadFile(exportData, filename, 'text/csv');
+                    }
+                    
+                    $('#exportStatus').html('<div class="success">Export complete!</div>');
+                  } else {
+                    $('#exportStatus').html('<div class="error">No results to export</div>');
+                  }
+                });
+              });
+              
+              // Handle search errors
+              exportSearch.on('search:error', function(properties) {
+                $('#exportStatus').html('<div class="error">Error exporting results: ' + properties.message + '</div>');
+              });
+              
+              // Function to download file
+              function downloadFile(content, filename, contentType) {
+                const blob = new Blob([content], { type: contentType });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                setTimeout(function() {
+                  document.body.removeChild(a);
+                  window.URL.revokeObjectURL(url);
+                }, 0);
+              }
+              
+              // Function to convert JSON to CSV
+              function jsonToCsv(jsonData) {
+                if (jsonData.length === 0) return '';
+                
+                // Get all unique keys
+                const keys = new Set();
+                jsonData.forEach(item => {
+                  Object.keys(item).forEach(key => keys.add(key));
+                });
+                
+                const headers = Array.from(keys);
+                let csv = headers.join(',') + '\n';
+                
+                jsonData.forEach(item => {
+                  const row = headers.map(key => {
+                    let value = item[key] || '';
+                    // Handle array values
+                    if (Array.isArray(value)) {
+                      value = '"' + value.join(';') + '"';
+                    } else if (typeof value === 'string') {
+                      // Escape quotes
+                      value = '"' + value.replace(/"/g, '""') + '"';
+                    }
+                    return value;
+                  });
+                  csv += row.join(',') + '\n';
+                });
+                
+                return csv;
+              }
+              
+              // Function to convert JSON to XML
+              function jsonToXml(jsonData) {
+                let xml = '<?xml version="1.0" encoding="UTF-8" ?>\n<results>\n';
+                
+                jsonData.forEach((item, index) => {
+                  xml += '  <result index="' + index + '">\n';
+                  
+                  Object.entries(item).forEach(([key, value]) => {
+                    if (Array.isArray(value)) {
+                      xml += '    <' + key + '>\n';
+                      value.forEach(val => {
+                        xml += '      <item>' + escapeXml(val) + '</item>\n';
+                      });
+                      xml += '    </' + key + '>\n';
+                    } else {
+                      xml += '    <' + key + '>' + escapeXml(value) + '</' + key + '>\n';
+                    }
+                  });
+                  
+                  xml += '  </result>\n';
+                });
+                
+                xml += '</results>';
+                return xml;
+              }
+              
+              // Function to escape XML special characters
+              function escapeXml(unsafe) {
+                if (unsafe === null || unsafe === undefined) return '';
+                return String(unsafe)
+                  .replace(/&/g, '&amp;')
+                  .replace(/</g, '&lt;')
+                  .replace(/>/g, '&gt;')
+                  .replace(/"/g, '&quot;')
+                  .replace(/'/g, '&apos;');
+              }
+            });
+          });
+        </script>
+      </html>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Dashboard Navigation</title>
+      <html>
+        <div class="dashboard-navigation">
+          <div class="nav-row">
+            <a href="edr_overview" class="nav-button">
+              <div class="nav-icon"><i class="icon-home"></i></div>
+              <div class="nav-label">Overview</div>
+            </a>
+            <a href="agent_inventory" class="nav-button">
+              <div class="nav-icon"><i class="icon-list"></i></div>
+              <div class="nav-label">Agent Inventory</div>
+            </a>
+            <a href="network_explorer" class="nav-button">
+              <div class="nav-icon"><i class="icon-network"></i></div>
+              <div class="nav-label">Network Explorer</div>
+            </a>
+          </div>
+          <div class="nav-row">
+            <a href="file_explorer" class="nav-button">
+              <div class="nav-icon"><i class="icon-document"></i></div>
+              <div class="nav-label">File Explorer</div>
+            </a>
+            <a href="registry_explorer" class="nav-button">
+              <div class="nav-icon"><i class="icon-registry"></i></div>
+              <div class="nav-label">Registry Explorer</div>
+            </a>
+            <a href="threat_detection" class="nav-button">
+              <div class="nav-icon"><i class="icon-alert"></i></div>
+              <div class="nav-label">Threat Detection</div>
+            </a>
+          </div>
+        </div>
+
+        <style>
+          .dashboard-navigation {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+          }
+          .nav-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            justify-content: center;
+          }
+          .nav-button {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 15px;
+            background-color: #1A1C21;
+            border-radius: 8px;
+            color: #ffffff;
+            text-decoration: none;
+            width: 160px;
+            transition: background-color 0.2s;
+          }
+          .nav-button:hover {
+            background-color: #2A2C31;
+          }
+          .nav-icon {
+            font-size: 24px;
+            margin-bottom: 10px;
+          }
+          .nav-label {
+            font-size: 14px;
+            text-align: center;
+          }
+        </style>
+      </html>
+    </panel>
+  </row>
+  
+  <row>
+    <panel>
+      <title>Provider-Specific Query Help</title>
+      <html>
+        <div class="help-section">
+          <h3>Provider-Specific Query Syntax</h3>
+          <div class="tabbed-content">
+            <div class="tab-headers">
+              <div class="tab-header active" data-tab="crowdstrike">CrowdStrike</div>
+              <div class="tab-header" data-tab="sentinelone">SentinelOne</div>
+              <div class="tab-header" data-tab="defender">Microsoft Defender</div>
+            </div>
+            <div class="tab-content">
+              <div class="tab-pane active" id="crowdstrike-help">
+                <p>CrowdStrike uses FQL (Falcon Query Language) for filtering:</p>
+                <pre>ComputerName='WS01' AND FileName='cmd.exe'</pre>
+                <p>Common operators: AND, OR, =, !=, LIKE, IN</p>
+                <p><a href="https://falcon.crowdstrike.com/documentation/45/falcon-query-language-fql" target="_blank">CrowdStrike FQL Documentation</a></p>
+              </div>
+              <div class="tab-pane" id="sentinelone-help">
+                <p>SentinelOne uses a JSON-based query language:</p>
+                <pre>{"computerName":"WS01", "processName":"cmd.exe"}</pre>
+                <p>Or a simplified SQL-like syntax:</p>
+                <pre>computerName = 'WS01' AND processName = 'cmd.exe'</pre>
+                <p><a href="https://success.sentinelone.com/api-docs" target="_blank">SentinelOne API Documentation</a></p>
+              </div>
+              <div class="tab-pane" id="defender-help">
+                <p>Microsoft Defender uses KQL (Kusto Query Language):</p>
+                <pre>DeviceName == "WS01" and FileName == "cmd.exe"</pre>
+                <p>Common operators: and, or, ==, !=, contains, startswith</p>
+                <p><a href="https://docs.microsoft.com/en-us/microsoft-365/security/defender-endpoint/advanced-hunting-query-language" target="_blank">Microsoft Defender KQL Documentation</a></p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <script>
+          // Initialize tabs
+          $(document).ready(function() {
+            $('.tab-header').on('click', function() {
+              // Remove active class from all headers and panes
+              $('.tab-header').removeClass('active');
+              $('.tab-pane').removeClass('active');
+              
+              // Add active class to clicked header and corresponding pane
+              $(this).addClass('active');
+              $('#' + $(this).data('tab') + '-help').addClass('active');
+            });
+          });
+        </script>
+
+        <style>
+          .help-section {
+            padding: 15px;
+            background-color: #1A1C21;
+            border-radius: 5px;
+          }
+          .tab-headers {
+            display: flex;
+            border-bottom: 1px solid #333;
+            margin-bottom: 15px;
+          }
+          .tab-header {
+            padding: 8px 15px;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+          }
+          .tab-header.active {
+            border-bottom: 2px solid #1E88E5;
+            color: #1E88E5;
+          }
+          .tab-pane {
+            display: none;
+          }
+          .tab-pane.active {
+            display: block;
+          }
+          pre {
+            background-color: #252525;
+            padding: 10px;
+            border-radius: 5px;
+            overflow-x: auto;
+          }
+        </style>
+      </html>
+    </panel>
+  </row>
+</dashboard>

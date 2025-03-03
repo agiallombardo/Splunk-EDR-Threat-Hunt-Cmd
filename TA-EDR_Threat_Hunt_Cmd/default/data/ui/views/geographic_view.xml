@@ -1,0 +1,304 @@
+<?xml version="1.1" encoding="UTF-8"?>
+<dashboard version="1.1" theme="dark" stylesheet="edr_dashboard.css">
+  <label>EDR Geographic Distribution</label>
+  <description>Geographic distribution of EDR agents across the environment</description>
+  
+  <fieldset submitButton="true" autoRun="true">
+    <input type="multiselect" token="tenant_token" searchWhenChanged="false">
+      <label>Tenant</label>
+      <search>
+        <query>
+          | inputlookup edr_agents
+          | stats count by tenant
+          | sort tenant
+        </query>
+      </search>
+      <fieldForLabel>tenant</fieldForLabel>
+      <fieldForValue>tenant</fieldForValue>
+      <delimiter> OR </delimiter>
+      <valueSuffix>"</valueSuffix>
+      <valuePrefix>tenant="</valuePrefix>
+      <default>*</default>
+      <choice value="*">All</choice>
+    </input>
+    
+    <input type="multiselect" token="provider_token" searchWhenChanged="false">
+      <label>Provider</label>
+      <choice value="*">All</choice>
+      <choice value="provider=&quot;crowdstrike&quot;">CrowdStrike</choice>
+      <choice value="provider=&quot;sentinelone&quot;">SentinelOne</choice>
+      <choice value="provider=&quot;defender&quot;">Microsoft Defender</choice>
+      <default>*</default>
+      <delimiter> OR </delimiter>
+    </input>
+    
+    <input type="multiselect" token="status_token" searchWhenChanged="false">
+      <label>Status</label>
+      <search>
+        <query>
+          | inputlookup edr_agents
+          | stats count by status
+          | sort status
+        </query>
+      </search>
+      <fieldForLabel>status</fieldForLabel>
+      <fieldForValue>status</fieldForValue>
+      <delimiter> OR </delimiter>
+      <valueSuffix>"</valueSuffix>
+      <valuePrefix>status="</valuePrefix>
+      <default>*</default>
+      <choice value="*">All</choice>
+    </input>
+  </fieldset>
+
+  <row>
+    <panel>
+      <html>
+        <div id="statusBar" class="edr-status-bar">
+          <div class="status-message">Ready</div>
+          <div class="status-progress">
+            <div class="progress-bar"></div>
+          </div>
+        </div>
+        
+        <script>
+          require(['jquery', 'splunkjs/mvc/searchmanager', 'splunkjs/mvc/utils'], function($, SearchManager, utils) {
+            // Update status bar based on search status
+            $(document).on('search:start', function() {
+              $('#statusBar').attr('data-status', 'running');
+              $('#statusBar .status-message').text('Running query...');
+              $('#statusBar .progress-bar').css('width', '0%');
+            });
+            
+            $(document).on('search:progress', function(e, data) {
+              if (data &amp;&amp; data.content && data.content.doneProgress) {
+                const progress = Math.round(data.content.doneProgress * 100);
+                $('#statusBar .progress-bar').css('width', progress + '%');
+                $('#statusBar .status-message').text(`Processing: ${progress}% complete`);
+              }
+            });
+            
+            $(document).on('search:done', function() {
+              $('#statusBar').attr('data-status', 'done');
+              $('#statusBar .status-message').text('Query completed');
+              $('#statusBar .progress-bar').css('width', '100%');
+              
+              // Fade out progress bar after 3 seconds
+              setTimeout(function() {
+                $('#statusBar .progress-bar').addClass('fade-out');
+              }, 3000);
+            });
+            
+            $(document).on('search:fail', function(e, data) {
+              $('#statusBar').attr('data-status', 'error');
+              $('#statusBar .status-message').text('Query failed: ' + (data &amp;&amp; data.message ? data.message : 'Unknown error'));
+            });
+          });
+        </script>
+      </html>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Geographic Distribution of Agents</title>
+      <viz type="leaflet_maps_app.maps-plus">
+        <search>
+          <query>
+            | inputlookup edr_agents
+            | search 
+              $tenant_token$ 
+              $provider_token$ 
+              $status_token$
+            | iplocation ip_address
+            | stats count by ip_address lat lon City Country provider
+            | sort -count
+          </query>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="leaflet_maps_app.maps-plus.allValues">1</option>
+        <option name="leaflet_maps_app.maps-plus.animate">1</option>
+        <option name="leaflet_maps_app.maps-plus.autoFitAndZoom">1</option>
+        <option name="leaflet_maps_app.maps-plus.autoFitVisibleLayers">0</option>
+        <option name="leaflet_maps_app.maps-plus.center">0,0</option>
+        <option name="leaflet_maps_app.maps-plus.cluster">1</option>
+        <option name="leaflet_maps_app.maps-plus.clusterRadius">80</option>
+        <option name="leaflet_maps_app.maps-plus.defaultHeight">500</option>
+        <option name="leaflet_maps_app.maps-plus.disableClusteringAtZoom">10</option>
+        <option name="leaflet_maps_app.maps-plus.drilldown">0</option>
+        <option name="leaflet_maps_app.maps-plus.fullScreen">0</option>
+        <option name="leaflet_maps_app.maps-plus.mapTile">http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png</option>
+        <option name="leaflet_maps_app.maps-plus.maxClusterRadius">80</option>
+        <option name="leaflet_maps_app.maps-plus.maxZoom">19</option>
+        <option name="leaflet_maps_app.maps-plus.minZoom">0</option>
+        <option name="leaflet_maps_app.maps-plus.multiplePopups">0</option>
+        <option name="leaflet_maps_app.maps-plus.scroll">1</option>
+        <option name="leaflet_maps_app.maps-plus.showPathLines">0</option>
+        <option name="leaflet_maps_app.maps-plus.showProgress">1</option>
+        <option name="leaflet_maps_app.maps-plus.singleMarkerMode">0</option>
+        <option name="leaflet_maps_app.maps-plus.spiderfyDistanceMultiplier">1</option>
+        <option name="leaflet_maps_app.maps-plus.zoomAnimation">1</option>
+        <option name="trellis.enabled">0</option>
+        <option name="trellis.scales.shared">1</option>
+        <option name="trellis.size">medium</option>
+      </viz>
+    </panel>
+  </row>
+  
+  <row>
+    <panel>
+      <title>Agents by Country</title>
+      <chart>
+        <search>
+          <query>
+            | inputlookup edr_agents
+            | search 
+              $tenant_token$ 
+              $provider_token$ 
+              $status_token$
+            | iplocation ip_address
+            | stats count by Country
+            | sort -count
+            | where isnotnull(Country)
+            | head 10
+          </query>
+        </search>
+        <option name="charting.chart">bar</option>
+        <option name="charting.drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="charting.chart.showDataLabels">true</option>
+        <option name="charting.legend.placement">none</option>
+      </chart>
+    </panel>
+    
+    <panel>
+      <title>Agents by City (Top 10)</title>
+      <chart>
+        <search>
+          <query>
+            | inputlookup edr_agents
+            | search 
+              $tenant_token$ 
+              $provider_token$ 
+              $status_token$
+            | iplocation ip_address
+            | stats count by City Country
+            | eval Location=City." (".Country.")"
+            | sort -count
+            | where isnotnull(City) AND City!=""
+            | head 10
+          </query>
+        </search>
+        <option name="charting.chart">pie</option>
+        <option name="charting.drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="charting.legend.placement">right</option>
+      </chart>
+    </panel>
+  </row>
+  
+  <row>
+    <panel>
+      <title>Agent Distribution by Region</title>
+      <table>
+        <search>
+          <query>
+            | inputlookup edr_agents
+            | search 
+              $tenant_token$ 
+              $provider_token$ 
+              $status_token$
+            | iplocation ip_address
+            | stats count as "Agent Count" by Country provider
+            | sort -"Agent Count"
+            | where isnotnull(Country)
+            | rename Country as "Country", provider as "Provider"
+          </query>
+        </search>
+        <option name="count">20</option>
+        <option name="dataOverlayMode">none</option>
+        <option name="drilldown">none</option>
+        <option name="percentagesRow">false</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="rowNumbers">true</option>
+        <option name="totalsRow">false</option>
+        <option name="wrap">true</option>
+      </table>
+    </panel>
+  </row>
+  
+  <row>
+    <panel>
+      <title>Dashboard Navigation</title>
+      <html>
+        <div class="dashboard-navigation">
+          <div class="nav-row">
+            <a href="edr_overview" class="nav-button">
+              <div class="nav-icon"><i class="icon-home"></i></div>
+              <div class="nav-label">Overview</div>
+            </a>
+            <a href="agent_distribution" class="nav-button">
+              <div class="nav-icon"><i class="icon-bar-chart"></i></div>
+              <div class="nav-label">Agent Distribution</div>
+            </a>
+            <a href="integration_health" class="nav-button">
+              <div class="nav-icon"><i class="icon-health"></i></div>
+              <div class="nav-label">Integration Health</div>
+            </a>
+          </div>
+          <div class="nav-row">
+            <a href="agent_inventory" class="nav-button">
+              <div class="nav-icon"><i class="icon-list"></i></div>
+              <div class="nav-label">Agent Inventory</div>
+            </a>
+            <a href="agent_health" class="nav-button">
+              <div class="nav-icon"><i class="icon-check"></i></div>
+              <div class="nav-label">Agent Health</div>
+            </a>
+            <a href="process_explorer" class="nav-button">
+              <div class="nav-icon"><i class="icon-process"></i></div>
+              <div class="nav-label">Process Explorer</div>
+            </a>
+          </div>
+        </div>
+
+        <style>
+          .dashboard-navigation {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+          }
+          .nav-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            justify-content: center;
+          }
+          .nav-button {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 15px;
+            background-color: #1A1C21;
+            border-radius: 8px;
+            color: #ffffff;
+            text-decoration: none;
+            width: 160px;
+            transition: background-color 0.2s;
+          }
+          .nav-button:hover {
+            background-color: #2A2C31;
+          }
+          .nav-icon {
+            font-size: 24px;
+            margin-bottom: 10px;
+          }
+          .nav-label {
+            font-size: 14px;
+            text-align: center;
+          }
+        </style>
+      </html>
+    </panel>
+  </row>
+</dashboard>

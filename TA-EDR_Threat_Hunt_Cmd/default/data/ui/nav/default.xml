@@ -1,9 +1,36 @@
-<?xml version="1.0"?>
+<?xml version="1.1"?>
 <nav search_view="search" color="#007cc3">
-  <view name="edr_agent_overview" default="true" label="Agent Overview" />
-  <view name="edr_threat_hunting" label="Threat Hunting" />
-  <view name="edr_health_dashboard" label="Health Monitor" />
+  <!-- Set the navigation dashboard as the default view -->
+  <view name="edr_navigation" default="true" label="EDR Security Center" />
+  
+  <!-- Overview section -->
+  <collection label="Overview">
+    <view name="edr_overview" label="Status Overview" />
+    <view name="agent_distribution" label="Agent Distribution" />
+    <view name="integration_health" label="Integration Health" />
+  </collection>
+  
+  <!-- Agent Management section -->
+  <collection label="Agent Management">
+    <view name="agent_inventory" label="Agent Inventory" />
+    <view name="geographic_view" label="Geographic View" />
+    <view name="agent_health" label="Agent Health" />
+  </collection>
+  
+  <!-- Threat Hunting section -->
+  <collection label="Threat Hunting">
+    <view name="process_explorer" label="Process Explorer" />
+    <view name="network_explorer" label="Network Explorer" />
+    <view name="file_explorer" label="File Explorer" />
+    <view name="registry_explorer" label="Registry Explorer" />
+    <view name="script_analysis" label="Script Analysis" />
+    <view name="threat_hunting" label="Threat Hunting" />
+  </collection>
+  
+  <!-- Advanced Search -->
   <view name="search" label="Advanced Search" />
+  
+  <!-- Settings and Help section -->
   <collection label="Settings">
     <view name="setup" />
     <view name="alerts" />

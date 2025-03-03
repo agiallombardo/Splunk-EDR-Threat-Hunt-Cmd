@@ -1,0 +1,307 @@
+<?xml version="1.1" encoding="UTF-8"?>
+<dashboard version="1.1" theme="dark" stylesheet="edr_dashboard.css">
+  <label>EDR Status Overview</label>
+  <description>High-level overview of EDR environment status</description>
+  
+  <row>
+    <panel>
+      <html>
+        <div id="statusBar" class="edr-status-bar">
+          <div class="status-message">Ready</div>
+          <div class="status-progress">
+            <div class="progress-bar"></div>
+          </div>
+        </div>
+        
+        <script>
+          require(['jquery', 'splunkjs/mvc/searchmanager', 'splunkjs/mvc/utils'], function($, SearchManager, utils) {
+            // Update status bar based on search status
+            $(document).on('search:start', function() {
+              $('#statusBar').attr('data-status', 'running');
+              $('#statusBar .status-message').text('Running query...');
+              $('#statusBar .progress-bar').css('width', '0%');
+            });
+            
+            $(document).on('search:progress', function(e, data) {
+              if (data &amp;&amp; data.content && data.content.doneProgress) {
+                const progress = Math.round(data.content.doneProgress * 100);
+                $('#statusBar .progress-bar').css('width', progress + '%');
+                $('#statusBar .status-message').text(`Processing: ${progress}% complete`);
+              }
+            });
+            
+            $(document).on('search:done', function() {
+              $('#statusBar').attr('data-status', 'done');
+              $('#statusBar .status-message').text('Query completed');
+              $('#statusBar .progress-bar').css('width', '100%');
+              
+              // Fade out progress bar after 3 seconds
+              setTimeout(function() {
+                $('#statusBar .progress-bar').addClass('fade-out');
+              }, 3000);
+            });
+            
+            $(document).on('search:fail', function(e, data) {
+              $('#statusBar').attr('data-status', 'error');
+              $('#statusBar .status-message').text('Query failed: ' + (data &amp;&amp; data.message ? data.message : 'Unknown error'));
+            });
+          });
+        </script>
+      </html>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Health Status</title>
+      <single>
+        <search>
+          <query>
+            | inputlookup edr_health_results
+            | sort -_key
+            | head 1
+            | eval icon=case(
+                health_status=="healthy", "✓",
+                health_status=="degraded", "⚠",
+                health_status=="unhealthy", "✗",
+                1==1, "?"
+              )
+            | eval status=upper(health_status)
+            | eval status_with_icon=icon." ".status
+            | table status_with_icon
+            | rename status_with_icon as "Health Status"
+          </query>
+          <earliest>-24h</earliest>
+          <latest>now</latest>
+        </search>
+        <option name="colorBy">value</option>
+        <option name="colorMode">block</option>
+        <option name="drilldown">none</option>
+        <option name="rangeColors">["0xdc4e41", "0xf8be34", "0x53a051"]</option>
+        <option name="rangeValues">[50, 80]</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="useColors">true</option>
+      </single>
+    </panel>
+    
+    <panel>
+      <title>Overall Health Score</title>
+      <single>
+        <search>
+          <query>
+            | inputlookup edr_health_results
+            | sort -_key
+            | head 1
+            | eval score=overall_score."/100"
+            | table score
+            | rename score as "Health Score"
+          </query>
+          <earliest>-24h</earliest>
+          <latest>now</latest>
+        </search>
+        <option name="colorBy">value</option>
+        <option name="colorMode">block</option>
+        <option name="drilldown">none</option>
+        <option name="rangeColors">["0xdc4e41", "0xf8be34", "0x53a051"]</option>
+        <option name="rangeValues">[50, 80]</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="useColors">true</option>
+      </single>
+    </panel>
+    
+    <panel>
+      <title>Last Check</title>
+      <single>
+        <search>
+          <query>
+            | inputlookup edr_health_results
+            | sort -_key
+            | head 1
+            | eval last_check=strftime(strptime(timestamp, "%Y-%m-%d %H:%M:%S"), "%Y-%m-%d %H:%M:%S")
+            | eval last_check=last_check." (".relative_time(now(), "-".round((now()-strptime(timestamp, "%Y-%m-%d %H:%M:%S")))."s").")"
+            | table last_check
+            | rename last_check as "Last Check"
+          </query>
+          <earliest>-24h</earliest>
+          <latest>now</latest>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+      </single>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Total Agent Count</title>
+      <single>
+        <search>
+          <query>
+            | inputlookup edr_agents
+            | stats count
+          </query>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="rangeColors">["0x53a051", "0x0877a6", "0xf8be34", "0xf1813f", "0xdc4e41"]</option>
+        <option name="underLabel">Total Agents</option>
+        <option name="colorBy">value</option>
+      </single>
+    </panel>
+    
+    <panel>
+      <title>Agent Status Distribution</title>
+      <chart>
+        <search>
+          <query>
+            | inputlookup edr_agents
+            | stats count by status
+            | sort -count
+          </query>
+        </search>
+        <option name="charting.chart">pie</option>
+        <option name="charting.drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="charting.legend.placement">right</option>
+        <option name="charting.chart.showPercent">true</option>
+      </chart>
+    </panel>
+    
+    <panel>
+      <title>Provider Distribution</title>
+      <chart>
+        <search>
+          <query>
+            | inputlookup edr_agents
+            | stats count by provider
+            | sort -count
+          </query>
+        </search>
+        <option name="charting.chart">pie</option>
+        <option name="charting.drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="charting.legend.placement">right</option>
+        <option name="charting.fieldColors">{"crowdstrike": "#F82B60", "sentinelone": "#00BFB3", "defender": "#0078D4"}</option>
+        <option name="charting.chart.showPercent">true</option>
+      </chart>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Component Health Scores</title>
+      <chart>
+        <search>
+          <query>
+            | inputlookup edr_health_results
+            | sort -_key
+            | head 1
+            | eval app_status=component_scores.app_status
+            | eval credentials=component_scores.credentials
+            | eval tenant_consoles=component_scores.tenant_consoles
+            | eval kvstore=component_scores.kvstore
+            | eval api_connectivity=component_scores.api_connectivity
+            | eval search_commands=component_scores.search_commands
+            | table app_status credentials tenant_consoles kvstore api_connectivity search_commands
+            | transpose
+            | rename column as "Component", "row 1" as "Score"
+            | eval Component=case(
+                column=="app_status", "App Status",
+                column=="credentials", "Credentials",
+                column=="tenant_consoles", "Tenant Consoles",
+                column=="kvstore", "KV Store",
+                column=="api_connectivity", "API Connectivity",
+                column=="search_commands", "Search Commands",
+                true(), column
+              )
+          </query>
+          <earliest>-24h</earliest>
+          <latest>now</latest>
+        </search>
+        <option name="charting.chart">bar</option>
+        <option name="charting.chart.barBase">bottom</option>
+        <option name="charting.chart.barDirection">bar</option>
+        <option name="charting.drilldown">none</option>
+        <option name="charting.legend.placement">none</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="charting.axisY.maximumNumber">100</option>
+        <option name="charting.fieldColors">{"Score": 0x53a051}</option>
+        <option name="charting.chart.showDataLabels">true</option>
+      </chart>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Dashboard Navigation</title>
+      <html>
+        <div class="dashboard-navigation">
+          <div class="nav-row">
+            <a href="agent_distribution" class="nav-button">
+              <div class="nav-icon"><i class="icon-bar-chart"></i></div>
+              <div class="nav-label">Agent Distribution</div>
+            </a>
+            <a href="integration_health" class="nav-button">
+              <div class="nav-icon"><i class="icon-health"></i></div>
+              <div class="nav-label">Integration Health</div>
+            </a>
+            <a href="agent_inventory" class="nav-button">
+              <div class="nav-icon"><i class="icon-list"></i></div>
+              <div class="nav-label">Agent Inventory</div>
+            </a>
+          </div>
+          <div class="nav-row">
+            <a href="agent_health" class="nav-button">
+              <div class="nav-icon"><i class="icon-check"></i></div>
+              <div class="nav-label">Agent Health</div>
+            </a>
+            <a href="process_explorer" class="nav-button">
+              <div class="nav-icon"><i class="icon-process"></i></div>
+              <div class="nav-label">Process Explorer</div>
+            </a>
+            <a href="threat_hunting" class="nav-button">
+              <div class="nav-icon"><i class="icon-search"></i></div>
+              <div class="nav-label">Threat Hunting</div>
+            </a>
+          </div>
+        </div>
+
+        <style>
+          .dashboard-navigation {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+          }
+          .nav-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            justify-content: center;
+          }
+          .nav-button {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 15px;
+            background-color: #1A1C21;
+            border-radius: 8px;
+            color: #ffffff;
+            text-decoration: none;
+            width: 160px;
+            transition: background-color 0.2s;
+          }
+          .nav-button:hover {
+            background-color: #2A2C31;
+          }
+          .nav-icon {
+            font-size: 24px;
+            margin-bottom: 10px;
+          }
+          .nav-label {
+            font-size: 14px;
+            text-align: center;
+          }
+        </style>
+      </html>
+    </panel>
+  </row>
+</dashboard>
