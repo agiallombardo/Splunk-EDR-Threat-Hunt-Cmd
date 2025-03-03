@@ -1,4 +1,4 @@
-<?xml version="1.0"?>
+<?xml version="1.1"?>
 <dashboard theme="dark" stylesheet="edr_dashboard.css">
   <label>EDR Threat Hunting (Enhanced)</label>
   <description>Advanced dashboard for threat hunting across EDR platforms with improved visualization and filtering</description>
