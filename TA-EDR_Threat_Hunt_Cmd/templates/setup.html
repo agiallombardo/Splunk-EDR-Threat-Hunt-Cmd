@@ -1,10 +1,6 @@
-<%!
-import splunk.appserver.mrsparkle.lib.util as util
-%>
-
+<%page args="app, form, app_title"/>
 <%
-app_name = cherrypy.request.path_info.split('/')[3]
-app_root = util.make_splunkhome_path(['etc', 'apps', app_name])
+app_name = app
 %>
 
 <!DOCTYPE html>
@@ -12,28 +8,370 @@ app_root = util.make_splunkhome_path(['etc', 'apps', app_name])
 <head>
     <meta charset="utf-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <title>Setup</title>
+    <title>${app_title} Setup</title>
     <link rel="stylesheet" type="text/css" href="${make_url('/static/app/%s/setup.css' % app_name)}" />
-    <script type="text/javascript" src="${make_url('/static/app/%s/setup.js' % app_name)}"></script>
+    <script src="${make_url('/static/js/i18n.js')}"></script>
+    <script src="${make_url('/config?autoload=1')}"></script>
+    <script src="${make_url('/static/js/build/simplexml.config.js')}"></script>
+    <script src="${make_url('/static/app/%s/setup.js' % app_name)}"></script>
 </head>
 
-<body class="setup">
+<body class="setup-page">
     <div class="header">
-        <h1>Threat Hunt Command Setup</h1>
+        <h1>${app_title} Setup</h1>
     </div>
 
-    <div class="setup-info">
-        <h4>About This App</h4>
-        <p>This app provides a custom search command <code>edrhunt</code> for looking up Indicators of Compromise (IOCs) against threat APIs.</p>
-        <p>Complete the setup below to configure API credentials and settings.</p>
+    <div class="setup-wrapper">
+        <div class="setup-info">
+            <h2>About This App</h2>
+            <p>This app provides custom search commands for EDR threat hunting and integration across multiple EDR platforms including CrowdStrike, SentinelOne, and Microsoft Defender.</p>
+            <p>Complete the setup below to configure API credentials and settings for each provider.</p>
+            
+            <div class="info-callout">
+                <h3>Key Features</h3>
+                <ul>
+                    <li><strong>EDR Threat Hunting</strong>: Custom search command to query EDR platforms for threat hunting data</li>
+                    <li><strong>Agent Discovery</strong>: Search command to discover and manage EDR agents</li>
+                    <li><strong>Multi-Platform</strong>: Support for CrowdStrike, SentinelOne, and Microsoft Defender</li>
+                    <li><strong>Multi-Tenant</strong>: Support for multiple tenants and environments</li>
+                </ul>
+            </div>
+        </div>
+        
+        <div id="setup-status" class="setup-status"></div>
+        
+        <div class="setup-tabs">
+            <ul class="tab-navigation">
+                <li class="tab active" data-tab="general">General Settings</li>
+                <li class="tab" data-tab="crowdstrike">CrowdStrike</li>
+                <li class="tab" data-tab="sentinelone">SentinelOne</li>
+                <li class="tab" data-tab="defender">Microsoft Defender</li>
+                <li class="tab" data-tab="tenants">Tenants</li>
+                <li class="tab" data-tab="kvstore">KV Store</li>
+                <li class="tab" data-tab="health">Health Monitoring</li>
+            </ul>
+            
+            <div class="tab-content">
+                <!-- Form container -->
+                <form id="setup-form" method="post">
+                    ${form}
+                    
+                    <!-- General Settings Tab -->
+                    <div class="tab-pane active" id="general-tab">
+                        <h2>General Settings</h2>
+                        <p>Configure general settings for the app</p>
+                        
+                        <div class="control-group">
+                            <label for="enable_logging">Enable Detailed Logging</label>
+                            <input type="checkbox" name="enable_logging" id="enable_logging" data-tooltip="Turn on detailed logging for troubleshooting"/>
+                            <span class="help-block">Turn on detailed logging for troubleshooting</span>
+                        </div>
+                        
+                        <div class="control-group">
+                            <label for="log_level">Log Level</label>
+                            <select name="log_level" id="log_level" data-tooltip="Select logging level (DEBUG provides most detail)">
+                                <option value="INFO">INFO</option>
+                                <option value="DEBUG">DEBUG</option>
+                                <option value="WARNING">WARNING</option>
+                                <option value="ERROR">ERROR</option>
+                            </select>
+                            <span class="help-block">Select logging level (DEBUG provides most detail)</span>
+                        </div>
+                        
+                        <div class="control-group">
+                            <label for="default_threads">Default Thread Count</label>
+                            <input type="number" name="default_threads" id="default_threads" min="1" max="16" value="4" data-tooltip="Number of threads to use for parallel processing (1-16)"/>
+                            <span class="help-block">Number of threads to use for parallel processing (1-16)</span>
+                        </div>
+                        
+                        <div class="control-group">
+                            <label for="default_batch_size">Default Batch Size</label>
+                            <input type="number" name="default_batch_size" id="default_batch_size" min="1" max="100" value="20" data-tooltip="Number of records to process in each batch"/>
+                            <span class="help-block">Number of records to process in each batch</span>
+                        </div>
+                    </div>
+                    
+                    <!-- CrowdStrike Tab -->
+                    <div class="tab-pane" id="crowdstrike-tab">
+                        <h2>CrowdStrike Configuration</h2>
+                        <p>Configure CrowdStrike API integration settings</p>
+                        
+                        <div class="control-group">
+                            <label for="crowdstrike_enabled">Enable CrowdStrike Integration</label>
+                            <input type="checkbox" name="crowdstrike_enabled" id="crowdstrike_enabled" checked="checked" data-tooltip="Enable or disable the CrowdStrike integration"/>
+                            <span class="help-block">Enable or disable the CrowdStrike integration</span>
+                        </div>
+                        
+                        <div class="control-group">
+                            <label for="crowdstrike_api_url">API URL</label>
+                            <input type="text" name="crowdstrike_api_url" id="crowdstrike_api_url" value="https://api.crowdstrike.com" data-tooltip="CrowdStrike API URL (e.g., https://api.crowdstrike.com)"/>
+                            <span class="help-block">CrowdStrike API URL (e.g., https://api.crowdstrike.com)</span>
+                        </div>
+                        
+                        <div class="control-group">
+                            <label for="crowdstrike_max_rate">API Rate Limit (Requests per Minute)</label>
+                            <input type="number" name="crowdstrike_max_rate" id="crowdstrike_max_rate" min="1" max="1000" value="120" data-tooltip="Maximum requests per minute to send to the CrowdStrike API"/>
+                            <span class="help-block">Maximum requests per minute to send to the CrowdStrike API</span>
+                        </div>
+                        
+                        <div class="control-group">
+                            <label for="crowdstrike_api_timeout">API Timeout (Seconds)</label>
+                            <input type="number" name="crowdstrike_api_timeout" id="crowdstrike_api_timeout" min="1" max="300" value="30" data-tooltip="Timeout in seconds for API requests"/>
+                            <span class="help-block">Timeout in seconds for API requests</span>
+                        </div>
+                        
+                        <hr />
+                        
+                        <h3>CrowdStrike Credentials</h3>
+                        <p>Configure CrowdStrike API credentials for each tenant and console</p>
+                        
+                        <div class="control-group">
+                            <div id="crowdstrike-credentials-container">
+                                <!-- Credentials will be populated by JavaScript -->
+                            </div>
+                            
+                            <button type="button" class="btn btn-primary" id="add-crowdstrike-credential" data-provider="crowdstrike">Add Credential</button>
+                            <span class="help-block">Format: crowdstrike_&lt;tenant&gt;_&lt;console&gt; (e.g., crowdstrike_default_primary)</span>
+                            
+                            <input type="hidden" name="crowdstrike_credentials_list" id="crowdstrike_credentials_list" />
+                        </div>
+                    </div>
+                    
+                    <!-- SentinelOne Tab -->
+                    <div class="tab-pane" id="sentinelone-tab">
+                        <h2>SentinelOne Configuration</h2>
+                        <p>Configure SentinelOne API integration settings</p>
+                        
+                        <div class="control-group">
+                            <label for="sentinelone_enabled">Enable SentinelOne Integration</label>
+                            <input type="checkbox" name="sentinelone_enabled" id="sentinelone_enabled" checked="checked" data-tooltip="Enable or disable the SentinelOne integration"/>
+                            <span class="help-block">Enable or disable the SentinelOne integration</span>
+                        </div>
+                        
+                        <div class="control-group">
+                            <label for="sentinelone_api_url">API URL</label>
+                            <input type="text" name="sentinelone_api_url" id="sentinelone_api_url" value="https://management-api.sentinelone.net" data-tooltip="SentinelOne API URL (e.g., https://management-api.sentinelone.net)"/>
+                            <span class="help-block">SentinelOne API URL (e.g., https://management-api.sentinelone.net)</span>
+                        </div>
+                        
+                        <div class="control-group">
+                            <label for="sentinelone_max_rate">API Rate Limit (Requests per Minute)</label>
+                            <input type="number" name="sentinelone_max_rate" id="sentinelone_max_rate" min="1" max="1000" value="60" data-tooltip="Maximum requests per minute to send to the SentinelOne API"/>
+                            <span class="help-block">Maximum requests per minute to send to the SentinelOne API</span>
+                        </div>
+                        
+                        <div class="control-group">
+                            <label for="sentinelone_api_timeout">API Timeout (Seconds)</label>
+                            <input type="number" name="sentinelone_api_timeout" id="sentinelone_api_timeout" min="1" max="300" value="30" data-tooltip="Timeout in seconds for API requests"/>
+                            <span class="help-block">Timeout in seconds for API requests</span>
+                        </div>
+                        
+                        <hr />
+                        
+                        <h3>SentinelOne Credentials</h3>
+                        <p>Configure SentinelOne API credentials for each tenant and console</p>
+                        
+                        <div class="control-group">
+                            <div id="sentinelone-credentials-container">
+                                <!-- Credentials will be populated by JavaScript -->
+                            </div>
+                            
+                            <button type="button" class="btn btn-primary" id="add-sentinelone-credential" data-provider="sentinelone">Add Credential</button>
+                            <span class="help-block">Format: sentinelone_&lt;tenant&gt;_&lt;console&gt; (e.g., sentinelone_default_primary)</span>
+                            
+                            <input type="hidden" name="sentinelone_credentials_list" id="sentinelone_credentials_list" />
+                        </div>
+                    </div>
+                    
+                    <!-- Microsoft Defender Tab -->
+                    <div class="tab-pane" id="defender-tab">
+                        <h2>Microsoft Defender Configuration</h2>
+                        <p>Configure Microsoft Defender API integration settings</p>
+                        
+                        <div class="control-group">
+                            <label for="defender_enabled">Enable Microsoft Defender Integration</label>
+                            <input type="checkbox" name="defender_enabled" id="defender_enabled" checked="checked" data-tooltip="Enable or disable the Microsoft Defender integration"/>
+                            <span class="help-block">Enable or disable the Microsoft Defender integration</span>
+                        </div>
+                        
+                        <div class="control-group">
+                            <label for="defender_api_url">API URL</label>
+                            <input type="text" name="defender_api_url" id="defender_api_url" value="https://api.securitycenter.microsoft.com" data-tooltip="Microsoft Defender API URL (e.g., https://api.securitycenter.microsoft.com)"/>
+                            <span class="help-block">Microsoft Defender API URL (e.g., https://api.securitycenter.microsoft.com)</span>
+                        </div>
+                        
+                        <div class="control-group">
+                            <label for="defender_max_rate">API Rate Limit (Requests per Minute)</label>
+                            <input type="number" name="defender_max_rate" id="defender_max_rate" min="1" max="1000" value="100" data-tooltip="Maximum requests per minute to send to the Microsoft Defender API"/>
+                            <span class="help-block">Maximum requests per minute to send to the Microsoft Defender API</span>
+                        </div>
+                        
+                        <div class="control-group">
+                            <label for="defender_api_timeout">API Timeout (Seconds)</label>
+                            <input type="number" name="defender_api_timeout" id="defender_api_timeout" min="1" max="300" value="30" data-tooltip="Timeout in seconds for API requests"/>
+                            <span class="help-block">Timeout in seconds for API requests</span>
+                        </div>
+                        
+                        <hr />
+                        
+                        <h3>Microsoft Defender Credentials</h3>
+                        <p>Configure Microsoft Defender API credentials for each tenant and console</p>
+                        
+                        <div class="control-group">
+                            <div id="defender-credentials-container">
+                                <!-- Credentials will be populated by JavaScript -->
+                            </div>
+                            
+                            <button type="button" class="btn btn-primary" id="add-defender-credential" data-provider="defender">Add Credential</button>
+                            <span class="help-block">Format: defender_&lt;tenant&gt;_&lt;console&gt; (e.g., defender_default_primary)</span>
+                            
+                            <input type="hidden" name="defender_credentials_list" id="defender_credentials_list" />
+                        </div>
+                    </div>
+                    
+                    <!-- Tenants Tab -->
+                    <div class="tab-pane" id="tenants-tab">
+                        <h2>Tenant Configuration</h2>
+                        <p>Configure tenants for multi-tenant environments</p>
+                        
+                        <div class="control-group">
+                            <label for="tenant_list">Tenant List</label>
+                            <textarea name="tenant_list" id="tenant_list" rows="5" placeholder="default,corporate,emea,apac" data-tooltip="Comma-separated list of tenant IDs"></textarea>
+                            <span class="help-block">Comma-separated list of tenant IDs</span>
+                        </div>
+                        
+                        <hr />
+                        
+                        <h3>Tenant Information</h3>
+                        <p>Each tenant can have multiple consoles for different EDR providers</p>
+                        
+                        <div id="tenant-info-container">
+                            <!-- Tenant information will be populated by JavaScript -->
+                        </div>
+                    </div>
+                    
+                    <!-- KV Store Tab -->
+                    <div class="tab-pane" id="kvstore-tab">
+                        <h2>KV Store Configuration</h2>
+                        <p>Configure KV Store settings for agent data storage</p>
+                        
+                        <div class="control-group">
+                            <label for="kvstore_collection">KV Store Collection Name</label>
+                            <input type="text" name="kvstore_collection" id="kvstore_collection" value="edr_agents" data-tooltip="Name of the KV Store collection to use for agent data"/>
+                            <span class="help-block">Name of the KV Store collection to use for agent data</span>
+                        </div>
+                        
+                        <div class="control-group">
+                            <label for="agent_ttl">Agent TTL (Days)</label>
+                            <input type="number" name="agent_ttl" id="agent_ttl" min="1" max="365" value="7" data-tooltip="Time-to-live in days for agent records"/>
+                            <span class="help-block">Time-to-live in days for agent records</span>
+                        </div>
+                        
+                        <div class="control-group">
+                            <label for="backup_to_csv">Backup Agents to CSV</label>
+                            <input type="checkbox" name="backup_to_csv" id="backup_to_csv" checked="checked" data-tooltip="Periodically backup agent data to CSV for redundancy"/>
+                            <span class="help-block">Periodically backup agent data to CSV for redundancy</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Health Monitoring Tab -->
+                    <div class="tab-pane" id="health-tab">
+                        <h2>Health Monitoring</h2>
+                        <p>Configure health monitoring for your EDR integration</p>
+                        
+                        <div class="control-group">
+                            <label for="enable_health_monitoring">Enable Health Monitoring</label>
+                            <input type="checkbox" name="enable_health_monitoring" id="enable_health_monitoring" checked="checked" data-tooltip="Enable automated health monitoring for EDR integration"/>
+                            <span class="help-block">Enable automated health monitoring for EDR integration</span>
+                        </div>
+                        
+                        <div class="control-group">
+                            <label for="health_check_interval">Health Check Interval (Hours)</label>
+                            <input type="number" name="health_check_interval" id="health_check_interval" min="1" max="168" value="24" data-tooltip="How often to run automated health checks (in hours)"/>
+                            <span class="help-block">How often to run automated health checks (in hours)</span>
+                        </div>
+                        
+                        <div class="control-group">
+                            <label for="health_results_collection">Health Results Collection</label>
+                            <input type="text" name="health_results_collection" id="health_results_collection" value="edr_health_results" data-tooltip="KV Store collection name for health check results"/>
+                            <span class="help-block">KV Store collection name for health check results</span>
+                        </div>
+                        
+                        <div class="control-group">
+                            <label for="health_retention_days">Health Results Retention (Days)</label>
+                            <input type="number" name="health_retention_days" id="health_retention_days" min="1" max="365" value="30" data-tooltip="How long to keep health check results in KV Store (in days)"/>
+                            <span class="help-block">How long to keep health check results in KV Store (in days)</span>
+                        </div>
+                        
+                        <div class="control-group">
+                            <label for="alert_on_degradation">Alert on Service Degradation</label>
+                            <input type="checkbox" name="alert_on_degradation" id="alert_on_degradation" checked="checked" data-tooltip="Send alerts when service degradation is detected"/>
+                            <span class="help-block">Send alerts when service degradation is detected</span>
+                        </div>
+                        
+                        <div class="control-group">
+                            <label for="alert_email">Alert Email Recipients</label>
+                            <input type="text" name="alert_email" id="alert_email" placeholder="security-team@example.com" data-tooltip="Comma-separated list of email addresses to receive alerts"/>
+                            <span class="help-block">Comma-separated list of email addresses to receive alerts</span>
+                        </div>
+                    </div>
+                    
+                    <div class="form-actions">
+                        <input type="submit" value="Save Configuration" class="btn btn-primary" />
+                        <button type="button" id="test-all-connections" class="btn btn-test">Test All Connections</button>
+                    </div>
+                </form>
+            </div>
+        </div>
     </div>
-
-    ${setup_form}
+    
+    <!-- Credential Modal -->
+    <div id="credential-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Add Credential</h3>
+                <span class="modal-close">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div id="credential-modal-error" class="error" style="display: none;"></div>
+                <form id="credential-form">
+                    <input type="hidden" id="credential-provider">
+                    <input type="hidden" id="credential-original">
+                    
+                    <div class="control-group">
+                        <label for="credential-tenant">Tenant</label>
+                        <input type="text" id="credential-tenant" placeholder="default">
+                        <span class="help-block">Tenant identifier (e.g., default, corporate, emea)</span>
+                    </div>
+                    
+                    <div class="control-group">
+                        <label for="credential-console">Console</label>
+                        <input type="text" id="credential-console" placeholder="primary">
+                        <span class="help-block">Console identifier (e.g., primary, secondary)</span>
+                    </div>
+                    
+                    <div class="control-group">
+                        <label for="credential-username">Username / Client ID</label>
+                        <input type="text" id="credential-username">
+                        <span class="help-block">API username or client ID</span>
+                    </div>
+                    
+                    <div class="control-group">
+                        <label for="credential-password">Password / Client Secret</label>
+                        <input type="password" id="credential-password">
+                        <span class="help-block">API password or client secret</span>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn modal-cancel">Cancel</button>
+                <button type="button" class="btn btn-primary" id="save-credential">Save</button>
+            </div>
+        </div>
+    </div>
 
     <div class="footer">
-        <p>
-            &copy; Anthony Giallombardo. All rights reserved. GNU GPL v3
-        </p>
+        <p>&copy; 2023 Your Company. All rights reserved.</p>
     </div>
 </body>
 </html>

@@ -16,9 +16,7 @@ require([
     var EnhancedSetupView = {
         // Store references to status elements
         statusElements: {
-            crowdstrike: $('#crowdstrike_status'),
-            sentinelone: $('#sentinelone_status'),
-            defender: $('#defender_status')
+            main: $('#setup-status')
         },
         
         // Maintain state of credentials
@@ -27,15 +25,20 @@ require([
             sentinelone: {},
             defender: {}
         },
+
+        // Initialize current tenants
+        tenants: ['default'],
         
         // Initialize the setup view
         initialize: function() {
             this.createToggleSwitches();
             this.enhanceFormElements();
+            this.setupTabs();
             this.bindEvents();
             this.setupValidation();
             this.setupTooltips();
             this.setupCredentialManagement();
+            this.loadTenants();
         },
         
         // Create toggle switches for boolean inputs
@@ -68,6 +71,24 @@ require([
             // Format credential lists
             this.formatCredentialLists();
         },
+
+        // Set up tabs
+        setupTabs: function() {
+            var self = this;
+            
+            // Handle tab navigation
+            $('.tab').on('click', function() {
+                var tabId = $(this).data('tab');
+                
+                // Update active tab
+                $('.tab').removeClass('active');
+                $(this).addClass('active');
+                
+                // Show selected tab pane
+                $('.tab-pane').removeClass('active');
+                $('#' + tabId + '-tab').addClass('active');
+            });
+        },
         
         // Format credential lists into manageable UI
         formatCredentialLists: function() {
@@ -82,21 +103,15 @@ require([
                 var credentials = $input.val().split(',').filter(Boolean);
                 
                 // Create credential container
-                var $container = $('<div class="credentials-container" id="' + provider + '_credentials_container"></div>');
-                $input.after($container);
+                var $container = $('#' + provider + '-credentials-container');
                 
-                // Hide the original input
-                $input.hide();
+                // Clear the container
+                $container.empty();
                 
                 // Add credentials to the container
                 credentials.forEach(function(cred) {
                     self.addCredentialItem($container, cred, provider);
                 });
-                
-                // Add "Add Credential" button
-                var $addButton = $('<button type="button" class="btn btn-primary add-credential" data-provider="' + provider + '">' +
-                                  'Add ' + provider.charAt(0).toUpperCase() + provider.slice(1) + ' Credential</button>');
-                $container.after($addButton);
             });
         },
         
@@ -118,8 +133,8 @@ require([
             // Create action buttons
             var $actions = $('<div class="credential-actions"></div>');
             $actions.append('<button type="button" class="btn btn-test test-credential" data-credential="' + credential + '" data-provider="' + provider + '" data-tenant="' + tenant + '" data-console="' + console + '">Test</button>');
-            $actions.append('<button type="button" class="btn edit-credential" data-credential="' + credential + '">Edit</button>');
-            $actions.append('<button type="button" class="btn remove-credential" data-credential="' + credential + '">Remove</button>');
+            $actions.append('<button type="button" class="btn edit-credential" data-credential="' + credential + '" data-provider="' + provider + '">Edit</button>');
+            $actions.append('<button type="button" class="btn remove-credential" data-credential="' + credential + '" data-provider="' + provider + '">Remove</button>');
             
             // Add status indicator
             $actions.append('<span class="credential-status" id="' + credential + '_status"></span>');
@@ -135,11 +150,94 @@ require([
             };
         },
         
+        // Load tenants from tenant list
+        loadTenants: function() {
+            var $tenantList = $('#tenant_list');
+            if ($tenantList.length === 0) return;
+            
+            var tenantList = $tenantList.val();
+            if (tenantList) {
+                this.tenants = tenantList.split(',').map(function(t) { return t.trim(); }).filter(Boolean);
+                
+                // Always ensure default tenant exists
+                if (this.tenants.indexOf('default') === -1) {
+                    this.tenants.unshift('default');
+                }
+            } else {
+                this.tenants = ['default'];
+            }
+            
+            this.updateTenantInfo();
+        },
+        
+        // Update tenant information display
+        updateTenantInfo: function() {
+            var self = this;
+            var $container = $('#tenant-info-container');
+            
+            // Clear container
+            $container.empty();
+            
+            // Add tenant information
+            this.tenants.forEach(function(tenant) {
+                var $tenantInfo = $('<div class="tenant-info" data-tenant="' + tenant + '"></div>');
+                
+                // Add tenant header
+                $tenantInfo.append('<h4>' + tenant.charAt(0).toUpperCase() + tenant.slice(1) + '</h4>');
+                
+                // Add tenant credentials
+                var credentialSummary = self.getTenantCredentials(tenant);
+                
+                var $credSummary = $('<div class="tenant-credentials"></div>');
+                
+                if (credentialSummary.total === 0) {
+                    $credSummary.append('<p>No credentials configured for this tenant.</p>');
+                } else {
+                    var providerList = [];
+                    for (var provider in credentialSummary.providers) {
+                        if (credentialSummary.providers[provider] > 0) {
+                            providerList.push(provider + ': ' + credentialSummary.providers[provider]);
+                        }
+                    }
+                    
+                    $credSummary.append('<p><strong>Credentials:</strong> ' + providerList.join(', ') + '</p>');
+                }
+                
+                $tenantInfo.append($credSummary);
+                $container.append($tenantInfo);
+            });
+        },
+        
+        // Get credentials summary for a tenant
+        getTenantCredentials: function(tenant) {
+            var summary = {
+                total: 0,
+                providers: {
+                    crowdstrike: 0,
+                    sentinelone: 0,
+                    defender: 0
+                }
+            };
+            
+            // Check each provider
+            ['crowdstrike', 'sentinelone', 'defender'].forEach(function(provider) {
+                // Count credentials for this tenant
+                for (var cred in this.credentialState[provider]) {
+                    if (this.credentialState[provider][cred].tenant === tenant) {
+                        summary.providers[provider]++;
+                        summary.total++;
+                    }
+                }
+            }, this);
+            
+            return summary;
+        },
+        
         // Bind events to UI elements
         bindEvents: function() {
             var self = this;
             
-            // Test connection buttons for each provider
+            // Test connection buttons
             $(document).on('click', '.test-credential', function(e) {
                 e.preventDefault();
                 var provider = $(this).data('provider');
@@ -150,8 +248,14 @@ require([
                 self.testConnection(provider, credential, tenant, console);
             });
             
-            // Add credential button
-            $(document).on('click', '.add-credential', function(e) {
+            // Test all connections button
+            $('#test-all-connections').on('click', function(e) {
+                e.preventDefault();
+                self.testAllConnections();
+            });
+            
+            // Add credential buttons
+            $(document).on('click', '[id^=add-][id$=-credential]', function(e) {
                 e.preventDefault();
                 var provider = $(this).data('provider');
                 self.showAddCredentialModal(provider);
@@ -161,7 +265,7 @@ require([
             $(document).on('click', '.remove-credential', function(e) {
                 e.preventDefault();
                 var credential = $(this).data('credential');
-                var provider = credential.split('_')[0];
+                var provider = $(this).data('provider');
                 
                 self.removeCredential(credential, provider);
             });
@@ -170,17 +274,44 @@ require([
             $(document).on('click', '.edit-credential', function(e) {
                 e.preventDefault();
                 var credential = $(this).data('credential');
-                var provider = credential.split('_')[0];
+                var provider = $(this).data('provider');
                 
                 self.showEditCredentialModal(credential, provider);
             });
             
+            // Modal close button
+            $('.modal-close, .modal-cancel').on('click', function() {
+                $('#credential-modal').hide();
+            });
+            
+            // Close modal when clicking outside
+            $(window).on('click', function(e) {
+                if ($(e.target).is('.modal')) {
+                    $('.modal').hide();
+                }
+            });
+            
+            // Save credential button
+            $('#save-credential').on('click', function() {
+                self.saveCredential();
+            });
+            
+            // Tenant list changes
+            $('#tenant_list').on('change', function() {
+                self.loadTenants();
+            });
+            
             // Form submission - add additional validation
-            $('form').on('submit', function(e) {
+            $('#setup-form').on('submit', function(e) {
                 if (!self.validateForm()) {
                     e.preventDefault();
+                    self.showMessage('error', 'Please fix validation errors before submitting.');
                     return false;
                 }
+                
+                // Show loading message
+                self.showMessage('loading', 'Saving configuration...');
+                
                 return true;
             });
         },
@@ -218,7 +349,7 @@ require([
             });
             
             // Add validation to URL inputs
-            $('input[type="url"]').each(function() {
+            $('input[name$="_api_url"]').each(function() {
                 var $input = $(this);
                 
                 $input.on('change', function() {
@@ -234,19 +365,51 @@ require([
             });
             
             // Add validation to email inputs
-            $('input[type="email"]').each(function() {
+            $('input[name="alert_email"]').on('change', function() {
                 var $input = $(this);
+                var value = $input.val().trim();
                 
-                $input.on('change', function() {
-                    var value = $input.val().trim();
+                if (value) {
+                    var emails = value.split(',');
+                    var invalidEmails = [];
                     
-                    if (value && !self.isValidEmail(value)) {
-                        self.showValidationError($input, 'Please enter a valid email address');
+                    emails.forEach(function(email) {
+                        if (!self.isValidEmail(email.trim())) {
+                            invalidEmails.push(email.trim());
+                        }
+                    });
+                    
+                    if (invalidEmails.length > 0) {
+                        self.showValidationError($input, 'Invalid email(s): ' + invalidEmails.join(', '));
                         return;
                     }
+                }
+                
+                self.clearValidationError($input);
+            });
+            
+            // Validate tenant list
+            $('#tenant_list').on('change', function() {
+                var $input = $(this);
+                var value = $input.val().trim();
+                
+                if (value) {
+                    var tenants = value.split(',');
+                    var invalidTenants = [];
                     
-                    self.clearValidationError($input);
-                });
+                    tenants.forEach(function(tenant) {
+                        if (!self.isValidIdentifier(tenant.trim())) {
+                            invalidTenants.push(tenant.trim());
+                        }
+                    });
+                    
+                    if (invalidTenants.length > 0) {
+                        self.showValidationError($input, 'Invalid tenant ID(s): ' + invalidTenants.join(', ') + '. Use only alphanumeric characters, underscores, and hyphens.');
+                        return;
+                    }
+                }
+                
+                self.clearValidationError($input);
             });
         },
         
@@ -257,63 +420,7 @@ require([
         
         // Setup credential management
         setupCredentialManagement: function() {
-            // Create modal for adding/editing credentials
-            this.createCredentialModal();
-        },
-        
-        // Create modal for credential management
-        createCredentialModal: function() {
-            // Create modal if it doesn't exist
-            if ($('#credential-modal').length === 0) {
-                var modalHtml = 
-                    '<div id="credential-modal" class="modal fade" tabindex="-1" role="dialog">' +
-                    '  <div class="modal-dialog" role="document">' +
-                    '    <div class="modal-content">' +
-                    '      <div class="modal-header">' +
-                    '        <h4 class="modal-title">Manage Credential</h4>' +
-                    '        <button type="button" class="close" data-dismiss="modal" aria-label="Close">' +
-                    '          <span aria-hidden="true">&times;</span>' +
-                    '        </button>' +
-                    '      </div>' +
-                    '      <div class="modal-body">' +
-                    '        <form id="credential-form">' +
-                    '          <input type="hidden" id="credential-provider">' +
-                    '          <input type="hidden" id="credential-original">' +
-                    '          <div class="form-group">' +
-                    '            <label for="credential-tenant">Tenant</label>' +
-                    '            <input type="text" class="form-control" id="credential-tenant" placeholder="default">' +
-                    '          </div>' +
-                    '          <div class="form-group">' +
-                    '            <label for="credential-console">Console</label>' +
-                    '            <input type="text" class="form-control" id="credential-console" placeholder="primary">' +
-                    '          </div>' +
-                    '          <div class="form-group">' +
-                    '            <label for="credential-username">Username / Client ID</label>' +
-                    '            <input type="text" class="form-control" id="credential-username">' +
-                    '          </div>' +
-                    '          <div class="form-group">' +
-                    '            <label for="credential-password">Password / Client Secret</label>' +
-                    '            <input type="password" class="form-control" id="credential-password">' +
-                    '          </div>' +
-                    '        </form>' +
-                    '      </div>' +
-                    '      <div class="modal-footer">' +
-                    '        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>' +
-                    '        <button type="button" class="btn btn-primary" id="save-credential">Save</button>' +
-                    '      </div>' +
-                    '    </div>' +
-                    '  </div>' +
-                    '</div>';
-                
-                // Append modal to the body
-                $('body').append(modalHtml);
-                
-                // Bind save event
-                var self = this;
-                $('#save-credential').on('click', function() {
-                    self.saveCredential();
-                });
-            }
+            // No additional setup needed as modal is already in HTML
         },
         
         // Show modal for adding a new credential
@@ -328,8 +435,11 @@ require([
             // Set modal title
             $('.modal-title').text('Add ' + provider.charAt(0).toUpperCase() + provider.slice(1) + ' Credential');
             
+            // Hide any previous errors
+            $('#credential-modal-error').hide();
+            
             // Show modal
-            $('#credential-modal').modal('show');
+            $('#credential-modal').show();
         },
         
         // Show modal for editing a credential
@@ -354,8 +464,11 @@ require([
             // Set modal title
             $('.modal-title').text('Edit ' + provider.charAt(0).toUpperCase() + provider.slice(1) + ' Credential');
             
+            // Hide any previous errors
+            $('#credential-modal-error').hide();
+            
             // Show modal
-            $('#credential-modal').modal('show');
+            $('#credential-modal').show();
         },
         
         // Save credential
@@ -404,12 +517,12 @@ require([
             this.saveCredentialToSplunk(newCredential, username, password, function(success) {
                 if (success) {
                     // Update UI
-                    var $container = $('#' + provider + '_credentials_container');
+                    var $container = $('#' + provider + '-credentials-container');
                     
                     // Check if credential already exists
                     if ($container.find('[data-credential="' + newCredential + '"]').length > 0) {
                         // Update status
-                        $('#' + newCredential + '_status').removeClass('verified unverified').text('');
+                        $('#' + newCredential + '_status').removeClass('verified unverified error').text('');
                     } else {
                         // Add new credential to UI
                         this.addCredentialItem($container, newCredential, provider);
@@ -418,8 +531,18 @@ require([
                     // Update hidden input with all credentials
                     this.updateCredentialList(provider);
                     
+                    // Add tenant to tenant list if it doesn't exist
+                    if (this.tenants.indexOf(tenant) === -1) {
+                        this.tenants.push(tenant);
+                        $('#tenant_list').val(this.tenants.join(','));
+                        this.updateTenantInfo();
+                    }
+                    
                     // Close modal
-                    $('#credential-modal').modal('hide');
+                    $('#credential-modal').hide();
+                    
+                    // Show success message
+                    this.showMessage('success', 'Credential saved successfully.');
                 }
             }.bind(this));
         },
@@ -437,6 +560,12 @@ require([
                 
                 // Update hidden input
                 this.updateCredentialList(provider);
+                
+                // Update tenant info
+                this.updateTenantInfo();
+                
+                // Show success message
+                this.showMessage('success', 'Credential removed successfully.');
             }
         },
         
@@ -469,6 +598,9 @@ require([
                 status: 'unknown'
             };
             
+            // Update credential list
+            this.updateCredentialList(provider);
+            
             // Call callback
             if (callback) {
                 callback(true);
@@ -477,21 +609,15 @@ require([
         
         // Show modal error
         showModalError: function(message) {
-            // Check if error message element exists
             var $errorEl = $('#credential-modal-error');
-            if ($errorEl.length === 0) {
-                // Create error element
-                $errorEl = $('<div id="credential-modal-error" class="error"></div>');
-                $('#credential-form').prepend($errorEl);
-            }
             
             // Set error message
-            $errorEl.text(message);
+            $errorEl.text(message).show();
         },
         
         // Hide modal error
         hideModalError: function() {
-            $('#credential-modal-error').remove();
+            $('#credential-modal-error').hide();
         },
         
         // Test connection for a specific provider
@@ -500,10 +626,10 @@ require([
             var $status = $('#' + credential + '_status');
             
             // Show testing status
-            $status.removeClass('verified unverified').addClass('loading').text('Testing...');
+            $status.removeClass('verified unverified error').addClass('loading').text('Testing...');
             
             // Create the data to send
-            var url = splunkUtil.make_url('/splunkd/__raw/services/TA-EDR_Threat_Hunt_Cmd/test/_execute');
+            var url = splunkUtil.make_url('/splunkd/__raw/services/TA-EDR_Threat_Hunt_Cmd/setup_handler/_execute');
             var data = {
                 provider: provider,
                 tenant: tenant,
@@ -539,18 +665,119 @@ require([
                             }
                         }
                     } catch (e) {
-                        $status.removeClass('loading').addClass('unverified').html('✗ Error');
-                        self.showConnectionError(credential, 'Invalid response format: ' + e.message);
-                    }
-                },
-                error: function(xhr, status, error) {
-                    $status.removeClass('loading').addClass('unverified').html('✗ Error');
+                        $status.removeClass('loading').addClass('error').html('✗ Error');
                     self.showConnectionError(credential, 'Request failed: ' + error);
                     
                     // Update state
                     if (self.credentialState[provider] && self.credentialState[provider][credential]) {
                         self.credentialState[provider][credential].status = 'error';
                     }
+                }
+            });
+        },
+        
+        // Test all connections
+        testAllConnections: function() {
+            var self = this;
+            var providers = ['crowdstrike', 'sentinelone', 'defender'];
+            var totalCredentials = 0;
+            var testedCredentials = 0;
+            var successfulCredentials = 0;
+            
+            // Count total credentials
+            providers.forEach(function(provider) {
+                totalCredentials += Object.keys(self.credentialState[provider]).length;
+            });
+            
+            if (totalCredentials === 0) {
+                self.showMessage('warning', 'No credentials to test. Please add credentials first.');
+                return;
+            }
+            
+            // Show testing message
+            self.showMessage('loading', 'Testing ' + totalCredentials + ' credentials...');
+            
+            // Test each credential
+            providers.forEach(function(provider) {
+                for (var credential in self.credentialState[provider]) {
+                    (function(cred, prov) {
+                        var tenant = self.credentialState[prov][cred].tenant;
+                        var console = self.credentialState[prov][cred].console;
+                        
+                        var $status = $('#' + cred + '_status');
+                        $status.removeClass('verified unverified error').addClass('loading').text('Testing...');
+                        
+                        // Create the data to send
+                        var url = splunkUtil.make_url('/splunkd/__raw/services/TA-EDR_Threat_Hunt_Cmd/setup_handler/_execute');
+                        var data = {
+                            provider: prov,
+                            tenant: tenant,
+                            console: console
+                        };
+                        
+                        // Make the request
+                        $.ajax({
+                            url: url,
+                            type: 'POST',
+                            data: data,
+                            dataType: 'json',
+                            success: function(response) {
+                                testedCredentials++;
+                                
+                                try {
+                                    var result = JSON.parse(response.entry[0].content.test_result);
+                                    
+                                    if (result.success) {
+                                        $status.removeClass('loading').addClass('verified').html('✓ Verified');
+                                        successfulCredentials++;
+                                        
+                                        // Update state
+                                        if (self.credentialState[prov] && self.credentialState[prov][cred]) {
+                                            self.credentialState[prov][cred].status = 'verified';
+                                        }
+                                    } else {
+                                        $status.removeClass('loading').addClass('unverified').html('✗ Failed');
+                                        
+                                        // Update state
+                                        if (self.credentialState[prov] && self.credentialState[prov][cred]) {
+                                            self.credentialState[prov][cred].status = 'failed';
+                                        }
+                                    }
+                                } catch (e) {
+                                    $status.removeClass('loading').addClass('error').html('✗ Error');
+                                    
+                                    // Update state
+                                    if (self.credentialState[prov] && self.credentialState[prov][cred]) {
+                                        self.credentialState[prov][cred].status = 'error';
+                                    }
+                                }
+                                
+                                // If all tests are complete, show summary
+                                if (testedCredentials === totalCredentials) {
+                                    if (successfulCredentials === totalCredentials) {
+                                        self.showMessage('success', 'All ' + totalCredentials + ' credentials verified successfully.');
+                                    } else {
+                                        self.showMessage('warning', 'Completed testing ' + totalCredentials + ' credentials. ' + successfulCredentials + ' successful, ' + (totalCredentials - successfulCredentials) + ' failed.');
+                                    }
+                                }
+                            },
+                            error: function(xhr, status, error) {
+                                testedCredentials++;
+                                
+                                $status.removeClass('loading').addClass('error').html('✗ Error');
+                                
+                                // Update state
+                                if (self.credentialState[prov] && self.credentialState[prov][cred]) {
+                                    self.credentialState[prov][cred].status = 'error';
+                                }
+                                
+                                // If all tests are complete, show summary
+                                if (testedCredentials === totalCredentials) {
+                                    self.showMessage('warning', 'Completed testing ' + totalCredentials + ' credentials. ' + successfulCredentials + ' successful, ' + (totalCredentials - successfulCredentials) + ' failed.');
+                                }
+                            }
+                        });
+                    })(credential, provider);
                 }
             });
         },
@@ -604,6 +831,27 @@ require([
             $input.siblings('.validation-error').remove();
         },
         
+        // Show status message
+        showMessage: function(type, message) {
+            var self = this;
+            var $status = this.statusElements.main;
+            
+            // Clear existing messages
+            $status.removeClass('success error warning loading').empty();
+            
+            // Add new message
+            $status.addClass(type).text(message);
+            
+            // Auto-clear success messages after 5 seconds
+            if (type === 'success') {
+                setTimeout(function() {
+                    $status.fadeOut(500, function() {
+                        $status.removeClass('success').empty().show();
+                    });
+                }, 5000);
+            }
+        },
+        
         // Validate the entire form
         validateForm: function() {
             var isValid = true;
@@ -632,26 +880,37 @@ require([
             });
             
             // Validate URL inputs
-            $('input[type="url"]').each(function() {
+            $('input[name$="_api_url"]').each(function() {
                 var $input = $(this);
                 var value = $input.val().trim();
                 
-                if (value && !this.isValidUrl(value)) {
+                if (value && !EnhancedSetupView.isValidUrl(value)) {
                     isValid = false;
                     return;
                 }
-            }.bind(this));
+            });
             
             // Validate email inputs
-            $('input[type="email"]').each(function() {
+            $('input[name="alert_email"]').each(function() {
                 var $input = $(this);
                 var value = $input.val().trim();
                 
-                if (value && !this.isValidEmail(value)) {
-                    isValid = false;
-                    return;
+                if (value) {
+                    var emails = value.split(',');
+                    var allValid = true;
+                    
+                    emails.forEach(function(email) {
+                        if (!EnhancedSetupView.isValidEmail(email.trim())) {
+                            allValid = false;
+                        }
+                    });
+                    
+                    if (!allValid) {
+                        isValid = false;
+                        return;
+                    }
                 }
-            }.bind(this));
+            });
             
             return isValid;
         },
@@ -683,4 +942,9 @@ require([
     $(document).ready(function() {
         EnhancedSetupView.initialize();
     });
-});
+});✗ Error');
+                        self.showConnectionError(credential, 'Invalid response format: ' + e.message);
+                    }
+                },
+                error: function(xhr, status, error) {
+                    $status.removeClass('loading').addClass('error').html('
