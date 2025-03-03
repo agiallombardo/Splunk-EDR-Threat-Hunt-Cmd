@@ -78,7 +78,7 @@
             });
             
             $(document).on('search:progress', function(e, data) {
-              if (data &amp;&amp; data.content && data.content.doneProgress) {
+              if (data &amp;&amp; data.content &amp;&amp;data.content.doneProgress) {
                 const progress = Math.round(data.content.doneProgress * 100);
                 $('#statusBar .progress-bar').css('width', progress + '%');
                 $('#statusBar .status-message').text(`Processing: ${progress}% complete`);
@@ -394,7 +394,7 @@
                 reportSearch.on('search:done', function() {
                   reportSearch.data('results').once('data', function() {
                     const results = reportSearch.data('results').data().results;
-                    if (results && results.length > 0) {
+                    if (results &amp;&amp;results.length > 0) {
                       const healthScore = results[0].health_score;
                       const healthStatus = healthScore >= 90 ? 'Excellent' : 
                                            healthScore >= 75 ? 'Good' : 
@@ -438,7 +438,7 @@
                   exportSearch.data('results').once('data', function() {
                     const results = exportSearch.data('results').data().results;
                     
-                    if (results && results.length > 0) {
+                    if (results &amp;&amp;results.length > 0) {
                       const csv = jsonToCsv(results);
                       const filename = 'agent_health_issues_' + new Date().toISOString().replace(/:/g, '-') + '.csv';
                       downloadFile(csv, filename, 'text/csv');

@@ -109,7 +109,7 @@
             });
             
             $(document).on('search:progress', function(e, data) {
-              if (data &amp;&amp; data.content && data.content.doneProgress) {
+              if (data &amp;&amp; data.content &amp;&amp;data.content.doneProgress) {
                 const progress = Math.round(data.content.doneProgress * 100);
                 $('#statusBar .progress-bar').css('width', progress + '%');
                 $('#statusBar .status-message').text(`Processing: ${progress}% complete`);
@@ -457,7 +457,7 @@
                 exportSearch.data('results').once('data', function() {
                   const results = exportSearch.data('results').data().results;
                   
-                  if (results && results.length > 0) {
+                  if (results &amp;&amp;results.length > 0) {
                     // Format depends on selected option
                     const format = $('#export_format').val();
                     

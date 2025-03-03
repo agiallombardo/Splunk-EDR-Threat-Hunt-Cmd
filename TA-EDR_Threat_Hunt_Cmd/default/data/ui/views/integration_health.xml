@@ -23,7 +23,7 @@
             });
             
             $(document).on('search:progress', function(e, data) {
-              if (data &amp;&amp; data.content && data.content.doneProgress) {
+              if (data &amp;&amp; data.content &amp;&amp;data.content.doneProgress) {
                 const progress = Math.round(data.content.doneProgress * 100);
                 $('#statusBar .progress-bar').css('width', progress + '%');
                 $('#statusBar .status-message').text(`Processing: ${progress}% complete`);
@@ -231,7 +231,7 @@
                 lastRunSearch.on('search:done', function() {
                   lastRunSearch.data('results').once('data', function() {
                     var results = lastRunSearch.data('results').data().results;
-                    if (results && results.length > 0) {
+                    if (results &amp;&amp;results.length > 0) {
                       $('.last-run-info').html('<div class="info-text">Last health check: ' + results[0].last_run + '</div>');
                     }
                   });

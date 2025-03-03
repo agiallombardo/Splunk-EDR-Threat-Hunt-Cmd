@@ -23,7 +23,7 @@
             });
             
             $(document).on('search:progress', function(e, data) {
-              if (data &amp;&amp; data.content && data.content.doneProgress) {
+              if (data &amp;&amp; data.content &amp;&amp;data.content.doneProgress) {
                 const progress = Math.round(data.content.doneProgress * 100);
                 $('#statusBar .progress-bar').css('width', progress + '%');
                 $('#statusBar .status-message').text(`Processing: ${progress}% complete`);
