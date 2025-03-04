@@ -2,54 +2,7 @@
 <dashboard version="1.1" theme="dark" stylesheet="edr_dashboard.css">
   <label>EDR Status Overview</label>
   <description>High-level overview of EDR environment status</description>
-  
-  <row>
-    <panel>
-      <html>
-        <div id="statusBar" class="edr-status-bar">
-          <div class="status-message">Ready</div>
-          <div class="status-progress">
-            <div class="progress-bar"></div>
-          </div>
-        </div>
-        
-        <script>
-          require(['jquery', 'splunkjs/mvc/searchmanager', 'splunkjs/mvc/utils'], function($, SearchManager, utils) {
-            // Update status bar based on search status
-            $(document).on('search:start', function() {
-              $('#statusBar').attr('data-status', 'running');
-              $('#statusBar .status-message').text('Running query...');
-              $('#statusBar .progress-bar').css('width', '0%');
-            });
-            
-            $(document).on('search:progress', function(e, data) {
-              if (data &amp;&amp; data.content &amp;&amp;data.content.doneProgress) {
-                const progress = Math.round(data.content.doneProgress * 100);
-                $('#statusBar .progress-bar').css('width', progress + '%');
-                $('#statusBar .status-message').text(`Processing: ${progress}% complete`);
-              }
-            });
-            
-            $(document).on('search:done', function() {
-              $('#statusBar').attr('data-status', 'done');
-              $('#statusBar .status-message').text('Query completed');
-              $('#statusBar .progress-bar').css('width', '100%');
-              
-              // Fade out progress bar after 3 seconds
-              setTimeout(function() {
-                $('#statusBar .progress-bar').addClass('fade-out');
-              }, 3000);
-            });
-            
-            $(document).on('search:fail', function(e, data) {
-              $('#statusBar').attr('data-status', 'error');
-              $('#statusBar .status-message').text('Query failed: ' + (data &amp;&amp; data.message ? data.message : 'Unknown error'));
-            });
-          });
-        </script>
-      </html>
-    </panel>
-  </row>
+
 
   <row>
     <panel>
