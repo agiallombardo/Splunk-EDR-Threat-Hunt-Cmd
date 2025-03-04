@@ -661,4 +661,5 @@ if __name__ == "__main__":
                     }
             
             return None
-        except
+        except Exception as e:
+            self.logger.error(f"Error getting realm: {str(e)}")
