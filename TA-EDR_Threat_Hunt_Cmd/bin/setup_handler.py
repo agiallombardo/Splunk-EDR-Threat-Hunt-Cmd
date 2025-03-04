@@ -313,10 +313,9 @@ class SetupHandler(admin.MConfigHandler):
 if __name__ == "__main__":
     admin.init(SetupHandler, admin.CONTEXT_NONE) ImportError:
             # Fall back to standard logging
-            import logging
-            self.logger = logging.getLogger('setup_handler')
+    self.logger = logging.getLogger('setup_handler')
             
-        if self.requestedAction == admin.ACTION_EDIT:
+    if self.requestedAction == admin.ACTION_EDIT:
             # Add all parameters for editing
             for param in self.PARAM_MAP:
                 self.supportedArgs.addOptArg(param)
@@ -328,7 +327,7 @@ if __name__ == "__main__":
             self.supportedArgs.addOptArg('tenant_list')
                 
         # Support for custom actions
-        if self.customAction == '_execute':
+    if self.customAction == '_execute':
             for arg in ['provider', 'tenant', 'console']:
                 self.supportedArgs.addOptArg(arg)
     

@@ -5,7 +5,7 @@ import os
 import sys
 
 # Import the actual implementation
-from ta_edr_threat_hunt_cmd.commands.agentdiscovery_command import AgentDiscoveryCommand
+from ta_edr_threat_hunt_cmd.commands.agentdiscovery-command import AgentDiscoveryCommand
 
 if __name__ == "__main__":
     # This is the entry point for the command when executed by Splunk
