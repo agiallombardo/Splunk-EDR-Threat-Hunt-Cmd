@@ -514,7 +514,7 @@
               
               // Function to convert JSON to XML
               function jsonToXml(jsonData) {
-                let xml = '<?xml version="1.0" encoding="UTF-8" ?>\n<results>\n';
+                let xml = '<!-- XML Export -->\n<results>\n';
                 
                 jsonData.forEach((item, index) => {
                   xml += '  <result index="' + index + '">\n';
