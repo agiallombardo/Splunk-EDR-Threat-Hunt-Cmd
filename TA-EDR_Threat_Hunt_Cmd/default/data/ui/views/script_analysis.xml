@@ -118,9 +118,4 @@
         <option name="colorBy">value</option>
       </single>
     </panel>
-    
-    <panel>
-      <title>Script Execution Summary</title>
-      <single>
-        <search>
-          <query> <![CDATA[
+  
