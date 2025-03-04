@@ -311,10 +311,7 @@ class SetupHandler(admin.MConfigHandler):
 
 # Script execution
 if __name__ == "__main__":
-    admin.init(SetupHandler, admin.CONTEXT_NONE) ImportError:
-            # Fall back to standard logging
-    self.logger = logging.getLogger('setup_handler')
-            
+
     if self.requestedAction == admin.ACTION_EDIT:
             # Add all parameters for editing
             for param in self.PARAM_MAP:
@@ -336,7 +333,7 @@ if __name__ == "__main__":
         self.logger.info("Getting current configuration")
         
         # Create a base confInfo entry
-        confInfo['ta_edrhunt_settings'] = {}
+        confInfo['ta_edr_threat_hunt_cmd_settings'] = {}
         
         # Initialize configuration dict with defaults
         # This ensures all expected fields are present
@@ -358,32 +355,32 @@ if __name__ == "__main__":
         
         # Populate confInfo from config dict
         for param, value in config.items():
-            confInfo['ta_edrhunt_settings'][param] = value
+            confInfo['ta_edr_threat_hunt_cmd_settings'][param] = value
         
         # Get credential lists
         try:
             # Get CrowdStrike credentials
             cs_creds = self.get_credentials_by_prefix('crowdstrike_')
-            confInfo['ta_edrhunt_settings']['crowdstrike_credentials_list'] = ','.join(cs_creds)
+            confInfo['ta_edr_threat_hunt_cmd_settings']['crowdstrike_credentials_list'] = ','.join(cs_creds)
             
             # Get SentinelOne credentials
             s1_creds = self.get_credentials_by_prefix('sentinelone_')
-            confInfo['ta_edrhunt_settings']['sentinelone_credentials_list'] = ','.join(s1_creds)
+            confInfo['ta_edr_threat_hunt_cmd_settings']['sentinelone_credentials_list'] = ','.join(s1_creds)
             
             # Get Defender credentials
             def_creds = self.get_credentials_by_prefix('defender_')
-            confInfo['ta_edrhunt_settings']['defender_credentials_list'] = ','.join(def_creds)
+            confInfo['ta_edr_threat_hunt_cmd_settings']['defender_credentials_list'] = ','.join(def_creds)
         except Exception as e:
             self.logger.error(f"Error retrieving credentials: {str(e)}")
-            confInfo['ta_edrhunt_settings']['credential_error'] = str(e)
+            confInfo['ta_edr_threat_hunt_cmd_settings']['credential_error'] = str(e)
         
         # Get tenant list
         try:
             tenants = self.get_tenants()
-            confInfo['ta_edrhunt_settings']['tenant_list'] = ','.join(tenants)
+            confInfo['ta_edr_threat_hunt_cmd_settings']['tenant_list'] = ','.join(tenants)
         except Exception as e:
             self.logger.error(f"Error retrieving tenants: {str(e)}")
-            confInfo['ta_edrhunt_settings']['tenant_error'] = str(e)
+            confInfo['ta_edr_threat_hunt_cmd_settings']['tenant_error'] = str(e)
     
     def handleEdit(self, confInfo):
         """Handle form submission for editing configurations."""
@@ -411,13 +408,13 @@ if __name__ == "__main__":
             self.mark_app_configured()
             
             # Return success message
-            confInfo['ta_edrhunt_settings'] = {}
-            confInfo['ta_edrhunt_settings']['status'] = 'Configuration updated successfully'
+            confInfo['ta_edr_threat_hunt_cmd_settings'] = {}
+            confInfo['ta_edr_threat_hunt_cmd_settings']['status'] = 'Configuration updated successfully'
             
         except Exception as e:
             self.logger.error(f"Error updating configuration: {str(e)}")
-            confInfo['ta_edrhunt_settings'] = {}
-            confInfo['ta_edrhunt_settings']['error'] = f"Error updating configuration: {str(e)}"
+            confInfo['ta_edr_threat_hunt_cmd_settings'] = {}
+            confInfo['ta_edr_threat_hunt_cmd_settings']['error'] = f"Error updating configuration: {str(e)}"
     
     def handleCustom(self, confInfo):
         """Handle custom actions like connection testing."""

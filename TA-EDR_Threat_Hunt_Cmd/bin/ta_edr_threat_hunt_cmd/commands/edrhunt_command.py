@@ -14,10 +14,10 @@ from concurrent.futures import ThreadPoolExecutor
 from splunklib.searchcommands import dispatch, StreamingCommand, Configuration, Option, validators
 
 # Import our modules
-from ta_edr_threat_hunt_cmd.lib.utils.logging-utils import get_logger
+from ta_edr_threat_hunt_cmd.lib.utils.logging_utils import get_logger
 from ta_edr_threat_hunt_cmd.lib.utils.credentials import CredentialManager
-from ta_edr_threat_hunt_cmd.lib.utils.config-utils import ConfigManager
-from ta_edr_threat_hunt_cmd.lib.utils.rate-limiting import RateLimiter
+from ta_edr_threat_hunt_cmd.lib.utils.config_utils import ConfigManager
+from ta_edr_threat_hunt_cmd.lib.utils.rate_limiting import RateLimiter
 from ta_edr_threat_hunt_cmd.lib.storage.kvstore import KVStoreManager
 
 # Import provider modules dynamically based on user selection
