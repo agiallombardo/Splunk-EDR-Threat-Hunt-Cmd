@@ -240,9 +240,9 @@ class EDRHealthCheck:
         """Check tenant and console configurations."""
         logger.info("Checking tenant and console configurations...")
         
-        # Check tenants configuration
-        tenants_url = f"{self.splunk_url}/servicesNS/nobody/{self.app_name}/configs/conf-tenants?output_mode=json"
-        consoles_url = f"{self.splunk_url}/servicesNS/nobody/{self.app_name}/configs/conf-consoles?output_mode=json"
+        # Check tenants configuration - UCC format
+        tenants_url = f"{self.splunk_url}/servicesNS/nobody/{self.app_name}/configs/conf-ta_edr_threat_hunt_cmd_tenants?output_mode=json"
+        credentials_url = f"{self.splunk_url}/servicesNS/nobody/{self.app_name}/configs/conf-ta_edr_threat_hunt_cmd_credentials?output_mode=json"
         
         tenants = {}
         consoles = {}
@@ -259,13 +259,18 @@ class EDRHealthCheck:
                     name = entry.get('name', '')
                     content = entry.get('content', {})
                     
-                    if name.startswith('tenant:'):
-                        tenant_id = name[7:]  # Remove 'tenant:' prefix
-                        tenants[tenant_id] = {
-                            'name': content.get('name', tenant_id),
-                            'description': content.get('description', ''),
-                            'enabled': content.get('enabled', 'true') == 'true'
-                        }
+                    # Skip settings and default stanzas
+                    if name in ['settings', 'default']:
+                        continue
+                        
+                    # Extract tenant info from UCC format
+                    tenant_id = name
+                    tenants[tenant_id] = {
+                        'name': content.get('name', tenant_id),
+                        'display_name': content.get('display_name', tenant_id),
+                        'description': content.get('description', ''),
+                        'enabled': content.get('enabled', '1') == '1'
+                    }
                 
                 logger.info(f"Found {len(tenants)} tenant configurations")
                 
@@ -275,45 +280,94 @@ class EDRHealthCheck:
         except Exception as e:
             logger.error(f"Error checking tenant configurations: {str(e)}")
         
-        # Check consoles
+        # Check credentials (used as consoles in UCC format)
         try:
-            response = self.session.get(consoles_url)
+            response = self.session.get(credentials_url)
             
             if response.status_code == 200:
-                consoles_data = response.json()
-                entries = consoles_data.get('entry', [])
+                credentials_data = response.json()
+                entries = credentials_data.get('entry', [])
                 
                 for entry in entries:
                     name = entry.get('name', '')
                     content = entry.get('content', {})
                     
-                    if name.startswith('console:'):
-                        # Parse console:<tenant>:<provider>:<console>
-                        parts = name.split(':')
-                        if len(parts) >= 4:
-                            tenant_id = parts[1]
-                            provider = parts[2]
-                            console_id = parts[3]
-                            
-                            if tenant_id not in consoles:
-                                consoles[tenant_id] = {}
-                                
-                            if provider not in consoles[tenant_id]:
-                                consoles[tenant_id][provider] = {}
-                                
-                            consoles[tenant_id][provider][console_id] = {
-                                'api_url': content.get('api_url', ''),
-                                'rate_limit': content.get('rate_limit', ''),
-                                'credential_name': content.get('credential_name', '')
-                            }
+                    # Skip settings and default stanzas
+                    if name in ['settings', 'default']:
+                        continue
+                        
+                    # Extract console info from UCC credential
+                    tenant_id = content.get('tenant', 'default')
+                    provider = content.get('provider', '')
+                    console_id = content.get('console', 'primary')
+                    
+                    if not provider:
+                        continue
+                        
+                    if tenant_id not in consoles:
+                        consoles[tenant_id] = {}
+                        
+                    if provider not in consoles[tenant_id]:
+                        consoles[tenant_id][provider] = {}
+                        
+                    # Build console info
+                    consoles[tenant_id][provider][console_id] = {
+                        'credential_name': name
+                    }
                 
-                logger.info(f"Found console configurations for {len(consoles)} tenants")
+                logger.info(f"Found credentials for {len(consoles)} tenants")
                 
             else:
-                logger.warning(f"Failed to get console configurations: {response.status_code} {response.text}")
+                logger.warning(f"Failed to get credential configurations: {response.status_code} {response.text}")
                 
         except Exception as e:
-            logger.error(f"Error checking console configurations: {str(e)}")
+            logger.error(f"Error checking credential configurations: {str(e)}")
+        
+        # Get settings for provider-specific information
+        settings_url = f"{self.splunk_url}/servicesNS/nobody/{self.app_name}/configs/conf-ta_edr_threat_hunt_cmd_settings?output_mode=json"
+        
+        try:
+            response = self.session.get(settings_url)
+            
+            if response.status_code == 200:
+                settings_data = response.json()
+                settings = None
+                
+                # Extract settings
+                for entry in settings_data.get('entry', []):
+                    if entry.get('name') == 'settings':
+                        settings = entry.get('content', {})
+                        break
+                
+                if settings:
+                    # Update console info with API URLs from settings
+                    for tenant_id, providers in consoles.items():
+                        for provider, provider_consoles in providers.items():
+                            for console_id, console_info in provider_consoles.items():
+                                # Add API URL from settings
+                                api_url_key = f"{provider}_api_url"
+                                if api_url_key in settings:
+                                    console_info['api_url'] = settings[api_url_key]
+                                
+                                # Add rate limit from settings
+                                rate_limit_key = f"{provider}_max_rate"
+                                if rate_limit_key in settings:
+                                    console_info['rate_limit'] = settings[rate_limit_key]
+                                
+                                # For Defender, add tenant_id if available
+                                if provider == 'defender' and 'tenant_id' in console_info:
+                                    console_info['tenant_id'] = console_info['tenant_id']
+                                elif provider == 'defender':
+                                    # Use default tenant ID
+                                    console_info['tenant_id'] = '00000000-0000-0000-0000-000000000000'
+                
+                logger.info("Retrieved settings for API configuration")
+                
+            else:
+                logger.warning(f"Failed to get settings configuration: {response.status_code} {response.text}")
+                
+        except Exception as e:
+            logger.error(f"Error checking settings configuration: {str(e)}")
         
         # Analyze configurations
         tenant_console_report = {
@@ -381,9 +435,28 @@ class EDRHealthCheck:
                 'error': str(e)
             }
         
+        # Get collection name from settings
+        settings_url = f"{self.splunk_url}/servicesNS/nobody/{self.app_name}/configs/conf-ta_edr_threat_hunt_cmd_settings/settings?output_mode=json"
+        collection_name = 'edr_agents'  # Default
+        
+        try:
+            response = self.session.get(settings_url)
+            
+            if response.status_code == 200:
+                settings_data = response.json()
+                content = settings_data.get('entry', [{}])[0].get('content', {})
+                
+                # Get collection name from settings
+                collection_name = content.get('kvstore_collection', collection_name)
+                
+                logger.info(f"Using KV Store collection: {collection_name}")
+                
+        except Exception as e:
+            logger.error(f"Error getting collection name from settings: {str(e)}")
+        
         # Check agent collection
         if kvstore_status.get('running'):
-            collection_url = f"{self.splunk_url}/servicesNS/nobody/{self.app_name}/storage/collections/data/edr_agents?output_mode=json"
+            collection_url = f"{self.splunk_url}/servicesNS/nobody/{self.app_name}/storage/collections/data/{collection_name}?output_mode=json"
             
             try:
                 response = self.session.get(collection_url)
@@ -473,15 +546,6 @@ class EDRHealthCheck:
                         api_results[tenant_id][provider][console_id] = {
                             'status': 'error',
                             'error': 'Missing API URL or credential name'
-                        }
-                        continue
-                    
-                    # Check if we have credentials for this console
-                    provider_creds = credentials.get(provider, {}).get('credentials', [])
-                    if credential_name not in provider_creds:
-                        api_results[tenant_id][provider][console_id] = {
-                            'status': 'error',
-                            'error': f"Credential '{credential_name}' not found"
                         }
                         continue
                     
@@ -735,7 +799,7 @@ class EDRHealthCheck:
         """Check if the search commands are registered and working."""
         logger.info("Checking search commands...")
         
-        # Check if commands are registered
+                    # Check if commands are registered
         commands_url = f"{self.splunk_url}/servicesNS/nobody/{self.app_name}/configs/conf-commands?output_mode=json"
         
         try:
@@ -893,7 +957,7 @@ class EDRHealthCheck:
         if job_status.get('isFailed'):
             return {
                 'status': 'error',
-                'error': job_status.get('messages', ['Unknown error'])[0].get('text', 'Unknown error')
+                'error': job_status.get('messages', [{'text': 'Unknown error'}])[0].get('text', 'Unknown error')
             }
             
         # Success

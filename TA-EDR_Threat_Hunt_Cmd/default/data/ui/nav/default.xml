@@ -33,9 +33,12 @@
   <!-- Settings and Help section -->
   <collection label="Settings">
     <view name="setup" />
-    <view name="alerts" />
     <view name="schedules" />
-    <a href="/manager/TA-EDR_Threat_Hunt_Cmd/apps/local/TA-EDR_Threat_Hunt_Cmd/setup">Configuration</a>
+    <view name="inputs" />
+    <view name="settings" />
+    <view name="configuration" />
+    <view name="credentials" />
+      <view name="tenants" />
     <a href="https://github.com/agiallombardo/Splunk-EDR-Threat-Hunt-Cmd" target="_blank">Documentation</a>
   </collection>
 </nav>

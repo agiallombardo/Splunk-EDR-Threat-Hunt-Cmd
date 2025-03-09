@@ -7,7 +7,6 @@ import json
 import time
 import datetime
 import re
-import csv
 import splunk.admin as admin
 import splunk.entity as entity
 import splunk.rest as rest
@@ -28,7 +27,7 @@ class EDRRestHandler(admin.MRestHandler):
     REST API handler for TA-EDR_Threat_Hunt_Cmd app.
     
     Provides API endpoints for querying agents and running EDR commands.
-    Base endpoint: /services/edr
+    Base endpoint: /services/ta_edr_threat_hunt_cmd
     """
     
     # Available endpoints and required capabilities
@@ -79,10 +78,10 @@ class EDRRestHandler(admin.MRestHandler):
         Handle GET requests for various endpoints.
         
         Supported endpoints:
-        - /services/edr/agents
-        - /services/edr/tenants
-        - /services/edr/consoles
-        - /services/edr/health
+        - /services/ta_edr_threat_hunt_cmd/agents
+        - /services/ta_edr_threat_hunt_cmd/tenants
+        - /services/ta_edr_threat_hunt_cmd/consoles
+        - /services/ta_edr_threat_hunt_cmd/health
         """
         # Initialize component managers
         session_key = self.getSessionKey()
@@ -96,7 +95,7 @@ class EDRRestHandler(admin.MRestHandler):
         else:
             endpoint = 'agents'  # Default endpoint
 
-       # Process endpoint
+        # Process endpoint
         if endpoint == 'agents':
             # Return agents from KV Store
             self._handle_agents_get(confInfo)
@@ -118,8 +117,8 @@ class EDRRestHandler(admin.MRestHandler):
         Handle POST requests for various endpoints.
         
         Supported endpoints:
-        - /services/edr/agents
-        - /services/edr/execute
+        - /services/ta_edr_threat_hunt_cmd/agents
+        - /services/ta_edr_threat_hunt_cmd/execute
         """
         # Initialize component managers
         session_key = self.getSessionKey()
@@ -147,7 +146,7 @@ class EDRRestHandler(admin.MRestHandler):
         Handle DELETE requests for various endpoints.
         
         Supported endpoints:
-        - /services/edr/agents
+        - /services/ta_edr_threat_hunt_cmd/agents
         """
         # Initialize component managers
         session_key = self.getSessionKey()

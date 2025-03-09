@@ -1,0 +1,11 @@
+<?xml version="1.0"?>
+<dashboard isDashboard="false" script="js/build/entry_page.js" stylesheet="css/configuration.css">
+  <label>Configuration</label>
+  <row>
+    <panel>
+      <html>
+        <div id="main-component-container">Loading...</div>
+      </html>
+    </panel>
+  </row>
+</dashboard>

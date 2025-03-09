@@ -1,0 +1,11 @@
+<?xml version="1.0"?>
+<dashboard isDashboard="false" script="js/build/tenants_page.js" stylesheet="css/configuration.css">
+  <label>Tenants</label>
+  <row>
+    <panel>
+      <html>
+        <div id="tenants-container">Loading tenants...</div>
+      </html>
+    </panel>
+  </row>
+</dashboard>
