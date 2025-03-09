@@ -1,4 +1,14 @@
 <?xml version="1.0"?>
-<view template="ta_edr_threat_hunt_cmd:templates/setup.html" type="html">
-    <label>Setup</label>
-</view>
+<dashboard script="setup.js">
+  <label>Setup</label>
+  <row>
+    <panel>
+      <html>
+        <div class="setup-container">
+          <h2>EDR Threat Hunt Command Setup</h2>
+          <div id="setup-view">Loading setup page...</div>
+        </div>
+      </html>
+    </panel>
+  </row>
+</dashboard>

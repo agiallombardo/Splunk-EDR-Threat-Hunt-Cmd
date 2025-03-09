@@ -40,12 +40,38 @@ class SetupHandler(admin.MConfigHandler):
         """
         Setup method called for edit and list actions.
         """
+        # Add a settings stanza to confInfo if it doesn't exist
+        if 'settings' not in self.confInfo:
+            self.confInfo['settings'] = {}
+            
         if self.requestedAction == admin.ACTION_LIST:
             # On list, return current configuration
             self.get_configuration()
         elif self.requestedAction == admin.ACTION_EDIT:
             # On edit, update configuration
             self.update_configuration()
+    
+    def handleList(self, confInfo):
+        """
+        Handler for list action
+        """
+        # Make sure confInfo has a settings stanza
+        if 'settings' not in confInfo:
+            confInfo['settings'] = {}
+            
+        # Get configuration
+        self.get_configuration()
+        
+    def handleEdit(self, confInfo):
+        """
+        Handler for edit action
+        """
+        # Make sure confInfo has a settings stanza
+        if 'settings' not in confInfo:
+            confInfo['settings'] = {}
+            
+        # Update configuration
+        self.update_configuration()
     
     def get_configuration(self):
         """
@@ -83,8 +109,8 @@ class SetupHandler(admin.MConfigHandler):
             
             # Get settings from request
             settings = {}
-            for arg in self.supportedArgs:
-                if arg in self.callerArgs:
+            for arg in self.supportedArgs.keys():
+                if arg in self.callerArgs and self.callerArgs[arg] and len(self.callerArgs[arg]) > 0:
                     settings[arg] = self.callerArgs[arg][0]
             
             # Update the settings
@@ -94,7 +120,7 @@ class SetupHandler(admin.MConfigHandler):
             self._mark_app_configured(session_key)
             
             # Update the confInfo
-            self.confInfo['settings']['is_configured'] = True
+            self.confInfo['settings']['is_configured'] = "true"
             
         except Exception as e:
             self.logger.error(f"Error updating configuration: {str(e)}")

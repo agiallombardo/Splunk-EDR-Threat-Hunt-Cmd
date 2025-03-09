@@ -4,7 +4,7 @@ define([
     'backbone',
     'splunkjs/mvc',
     'splunkjs/mvc/simplesplunkview',
-    'app/ta_edr_threat_hunt_cmd/js/models/setup',
+    'app/TA-EDR_Threat_Hunt_Cmd/js/models/setup',
     'splunkjs/mvc/utils',
     'util/splunkd_utils',
     'splunkjs/mvc/tokenutils',
@@ -141,7 +141,7 @@ define([
             }).done(function() {
                 // Success, redirect to home
                 alert("Configuration saved successfully!");
-                window.location.href = '/app/ta_edr_threat_hunt_cmd/home';
+                window.location.href = '/app/TA-EDR_Threat_Hunt_Cmd/home';
             }).fail(function(response) {
                 console.error("Failed to save configuration:", response);
                 alert("Failed to save configuration. Check console for details.");
