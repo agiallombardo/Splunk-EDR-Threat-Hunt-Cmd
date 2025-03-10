@@ -1,0 +1,688 @@
+{
+  "pages": {
+    "configuration": {
+      "title": "Configuration",
+      "description": "Configure the EDR Threat Hunt Command app",
+      "tabs": [
+        {
+          "name": "settings",
+          "title": "Settings",
+          "entity": [
+            {
+              "field": "enable_logging",
+              "type": "checkbox",
+              "label": "Enable Logging",
+              "defaultValue": "1",
+              "help": "Enable detailed logging for troubleshooting"
+            },
+            {
+              "field": "log_level",
+              "type": "singleSelect",
+              "label": "Log Level",
+              "options": {
+                "delimiter": ",",
+                "items": [
+                  {
+                    "value": "DEBUG",
+                    "label": "DEBUG"
+                  },
+                  {
+                    "value": "INFO",
+                    "label": "INFO"
+                  },
+                  {
+                    "value": "WARNING",
+                    "label": "WARNING"
+                  },
+                  {
+                    "value": "ERROR",
+                    "label": "ERROR"
+                  },
+                  {
+                    "value": "CRITICAL",
+                    "label": "CRITICAL"
+                  }
+                ]
+              },
+              "defaultValue": "INFO",
+              "help": "Log verbosity level"
+            },
+            {
+              "field": "default_threads",
+              "type": "text",
+              "label": "Default Threads",
+              "validators": [
+                {
+                  "type": "number",
+                  "minValue": 1,
+                  "maxValue": 16,
+                  "errorMsg": "Must be a number between 1 and 16"
+                }
+              ],
+              "defaultValue": "4",
+              "help": "Default number of threads for parallel processing"
+            },
+            {
+              "field": "default_batch_size",
+              "type": "text",
+              "label": "Default Batch Size",
+              "validators": [
+                {
+                  "type": "number",
+                  "minValue": 1,
+                  "maxValue": 100,
+                  "errorMsg": "Must be a number between 1 and 100"
+                }
+              ],
+              "defaultValue": "20",
+              "help": "Default batch size for processing"
+            }
+          ],
+          "options": {
+            "saveValidator": "function(formData) { return true; }"
+          }
+        },
+        {
+          "name": "crowdstrike",
+          "title": "CrowdStrike",
+          "entity": [
+            {
+              "field": "crowdstrike_enabled",
+              "type": "checkbox",
+              "label": "Enable CrowdStrike Integration",
+              "defaultValue": "1",
+              "help": "Enable integration with CrowdStrike Falcon"
+            },
+            {
+              "field": "crowdstrike_api_url",
+              "type": "text",
+              "label": "CrowdStrike API URL",
+              "validators": [
+                {
+                  "type": "string",
+                  "minLength": 5,
+                  "maxLength": 256,
+                  "errorMsg": "API URL is required"
+                },
+                {
+                  "type": "pattern",
+                  "pattern": "https?://.*",
+                  "errorMsg": "Must be a valid URL starting with http:// or https://"
+                }
+              ],
+              "defaultValue": "https://api.crowdstrike.com",
+              "help": "CrowdStrike API endpoint URL"
+            },
+            {
+              "field": "crowdstrike_max_rate",
+              "type": "text",
+              "label": "API Rate Limit",
+              "validators": [
+                {
+                  "type": "number",
+                  "minValue": 1,
+                  "maxValue": 1000,
+                  "errorMsg": "Must be a number between 1 and 1000"
+                }
+              ],
+              "defaultValue": "120",
+              "help": "Maximum API requests per minute (respect API rate limits)"
+            },
+            {
+              "field": "crowdstrike_api_timeout",
+              "type": "text",
+              "label": "API Timeout",
+              "validators": [
+                {
+                  "type": "number",
+                  "minValue": 1,
+                  "maxValue": 300,
+                  "errorMsg": "Must be a number between 1 and 300"
+                }
+              ],
+              "defaultValue": "30",
+              "help": "API request timeout in seconds"
+            },
+            {
+              "field": "crowdstrike_default_filter",
+              "type": "text",
+              "label": "Default Agent Filter",
+              "defaultValue": "status:['normal','containment_pending','contained']",
+              "help": "Default filter for CrowdStrike agent queries"
+            }
+          ],
+          "options": {
+            "saveValidator": "function(formData) { return true; }"
+          }
+        },
+        {
+          "name": "sentinelone",
+          "title": "SentinelOne",
+          "entity": [
+            {
+              "field": "sentinelone_enabled",
+              "type": "checkbox",
+              "label": "Enable SentinelOne Integration",
+              "defaultValue": "1",
+              "help": "Enable integration with SentinelOne"
+            },
+            {
+              "field": "sentinelone_api_url",
+              "type": "text",
+              "label": "SentinelOne API URL",
+              "validators": [
+                {
+                  "type": "string",
+                  "minLength": 5,
+                  "maxLength": 256,
+                  "errorMsg": "API URL is required"
+                },
+                {
+                  "type": "pattern",
+                  "pattern": "https?://.*",
+                  "errorMsg": "Must be a valid URL starting with http:// or https://"
+                }
+              ],
+              "defaultValue": "https://management-api.sentinelone.net",
+              "help": "SentinelOne management API endpoint URL"
+            },
+            {
+              "field": "sentinelone_max_rate",
+              "type": "text",
+              "label": "API Rate Limit",
+              "validators": [
+                {
+                  "type": "number",
+                  "minValue": 1,
+                  "maxValue": 1000,
+                  "errorMsg": "Must be a number between 1 and 1000"
+                }
+              ],
+              "defaultValue": "60",
+              "help": "Maximum API requests per minute (respect API rate limits)"
+            },
+            {
+              "field": "sentinelone_api_timeout",
+              "type": "text",
+              "label": "API Timeout",
+              "validators": [
+                {
+                  "type": "number",
+                  "minValue": 1,
+                  "maxValue": 300,
+                  "errorMsg": "Must be a number between 1 and 300"
+                }
+              ],
+              "defaultValue": "30",
+              "help": "API request timeout in seconds"
+            },
+            {
+              "field": "sentinelone_default_filter",
+              "type": "text",
+              "label": "Default Agent Filter",
+              "defaultValue": "agentStatus:active+isDecommissioned:false",
+              "help": "Default filter for SentinelOne agent queries"
+            }
+          ],
+          "options": {
+            "saveValidator": "function(formData) { return true; }"
+          }
+        },
+        {
+          "name": "defender",
+          "title": "Microsoft Defender",
+          "entity": [
+            {
+              "field": "defender_enabled",
+              "type": "checkbox",
+              "label": "Enable Microsoft Defender Integration",
+              "defaultValue": "1",
+              "help": "Enable integration with Microsoft Defender for Endpoint"
+            },
+            {
+              "field": "defender_api_url",
+              "type": "text",
+              "label": "Defender API URL",
+              "validators": [
+                {
+                  "type": "string",
+                  "minLength": 5,
+                  "maxLength": 256,
+                  "errorMsg": "API URL is required"
+                },
+                {
+                  "type": "pattern",
+                  "pattern": "https?://.*",
+                  "errorMsg": "Must be a valid URL starting with http:// or https://"
+                }
+              ],
+              "defaultValue": "https://api.securitycenter.microsoft.com",
+              "help": "Microsoft Defender Security Center API endpoint URL"
+            },
+            {
+              "field": "defender_max_rate",
+              "type": "text",
+              "label": "API Rate Limit",
+              "validators": [
+                {
+                  "type": "number",
+                  "minValue": 1,
+                  "maxValue": 1000,
+                  "errorMsg": "Must be a number between 1 and 1000"
+                }
+              ],
+              "defaultValue": "100",
+              "help": "Maximum API requests per minute (respect API rate limits)"
+            },
+            {
+              "field": "defender_api_timeout",
+              "type": "text",
+              "label": "API Timeout",
+              "validators": [
+                {
+                  "type": "number",
+                  "minValue": 1,
+                  "maxValue": 300,
+                  "errorMsg": "Must be a number between 1 and 300"
+                }
+              ],
+              "defaultValue": "30",
+              "help": "API request timeout in seconds"
+            },
+            {
+              "field": "defender_use_advanced_hunting",
+              "type": "checkbox",
+              "label": "Use Advanced Hunting API",
+              "defaultValue": "1",
+              "help": "Use the Advanced Hunting API for process queries (when available)"
+            },
+            {
+              "field": "defender_default_filter",
+              "type": "text",
+              "label": "Default Agent Filter",
+              "defaultValue": "healthStatus eq 'Active'",
+              "help": "Default filter for Microsoft Defender device queries"
+            }
+          ],
+          "options": {
+            "saveValidator": "function(formData) { return true; }"
+          }
+        },
+        {
+          "name": "kvstore",
+          "title": "KV Store",
+          "entity": [
+            {
+              "field": "kvstore_collection",
+              "type": "text",
+              "label": "KV Store Collection",
+              "validators": [
+                {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 100,
+                  "errorMsg": "Collection name is required"
+                }
+              ],
+              "defaultValue": "edr_agents",
+              "help": "KV Store collection name for storing agent information"
+            },
+            {
+              "field": "agent_ttl",
+              "type": "text",
+              "label": "Agent TTL (days)",
+              "validators": [
+                {
+                  "type": "number",
+                  "minValue": 1,
+                  "maxValue": 365,
+                  "errorMsg": "Must be a number between 1 and 365"
+                }
+              ],
+              "defaultValue": "7",
+              "help": "Time-to-live in days for agent records"
+            },
+            {
+              "field": "backup_to_csv",
+              "type": "checkbox",
+              "label": "Backup to CSV",
+              "defaultValue": "1",
+              "help": "Backup agent data to CSV files"
+            },
+            {
+              "field": "backup_frequency",
+              "type": "text",
+              "label": "Backup Frequency (seconds)",
+              "validators": [
+                {
+                  "type": "number",
+                  "minValue": 3600,
+                  "maxValue": 604800,
+                  "errorMsg": "Must be a number between 3600 (1 hour) and 604800 (7 days)"
+                }
+              ],
+              "defaultValue": "86400",
+              "help": "Frequency of KV Store backups in seconds"
+            }
+          ],
+          "options": {
+            "saveValidator": "function(formData) { return true; }"
+          }
+        },
+        {
+          "name": "health",
+          "title": "Health Monitoring",
+          "entity": [
+            {
+              "field": "enable_health_monitoring",
+              "type": "checkbox",
+              "label": "Enable Health Monitoring",
+              "defaultValue": "1",
+              "help": "Enable app health monitoring"
+            },
+            {
+              "field": "health_check_interval",
+              "type": "text",
+              "label": "Health Check Interval (hours)",
+              "validators": [
+                {
+                  "type": "number",
+                  "minValue": 1,
+                  "maxValue": 168,
+                  "errorMsg": "Must be a number between 1 and 168"
+                }
+              ],
+              "defaultValue": "24",
+              "help": "Interval between health checks in hours"
+            },
+            {
+              "field": "health_results_collection",
+              "type": "text",
+              "label": "Health Results Collection",
+              "validators": [
+                {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 100,
+                  "errorMsg": "Collection name is required"
+                }
+              ],
+              "defaultValue": "edr_health_results",
+              "help": "KV Store collection name for storing health check results"
+            },
+            {
+              "field": "health_retention_days",
+              "type": "text",
+              "label": "Health Results Retention (days)",
+              "validators": [
+                {
+                  "type": "number",
+                  "minValue": 1,
+                  "maxValue": 365,
+                  "errorMsg": "Must be a number between 1 and 365"
+                }
+              ],
+              "defaultValue": "30",
+              "help": "Number of days to retain health check results"
+            },
+            {
+              "field": "alert_on_degradation",
+              "type": "checkbox",
+              "label": "Alert on Degradation",
+              "defaultValue": "1",
+              "help": "Generate alerts when health status degrades"
+            },
+            {
+              "field": "alert_email",
+              "type": "text",
+              "label": "Alert Email",
+              "validators": [
+                {
+                  "type": "pattern",
+                  "pattern": "^$|^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$",
+                  "errorMsg": "Must be a valid email address"
+                }
+              ],
+              "defaultValue": "",
+              "help": "Email address for health alerts (optional)"
+            }
+          ],
+          "options": {
+            "saveValidator": "function(formData) { return true; }"
+          }
+        }
+      ]
+    },
+    "inputs": {
+      "title": "Inputs",
+      "description": "Configure data inputs for the EDR Threat Hunt Command app",
+      "tabs": [
+        {
+          "name": "tenants",
+          "title": "Tenants",
+          "table": {
+            "header": [
+              {
+                "field": "name",
+                "label": "Name"
+              },
+              {
+                "field": "display_name",
+                "label": "Display Name"
+              },
+              {
+                "field": "description",
+                "label": "Description"
+              },
+              {
+                "field": "enabled",
+                "label": "Enabled"
+              }
+            ],
+            "actions": [
+              "edit",
+              "delete",
+              "clone"
+            ]
+          },
+          "entity": [
+            {
+              "field": "name",
+              "type": "text",
+              "label": "Name",
+              "validators": [
+                {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 50,
+                  "errorMsg": "Name is required and must be between 1 and 50 characters"
+                },
+                {
+                  "type": "pattern",
+                  "pattern": "^[a-zA-Z0-9_-]+$",
+                  "errorMsg": "Name must contain only alphanumeric characters, underscores, and hyphens"
+                }
+              ],
+              "help": "Unique identifier for the tenant"
+            },
+            {
+              "field": "display_name",
+              "type": "text",
+              "label": "Display Name",
+              "validators": [
+                {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 100,
+                  "errorMsg": "Display name is required and must be between 1 and 100 characters"
+                }
+              ],
+              "help": "Human-readable name for the tenant"
+            },
+            {
+              "field": "description",
+              "type": "text",
+              "label": "Description",
+              "help": "Description of the tenant"
+            },
+            {
+              "field": "enabled",
+              "type": "checkbox",
+              "label": "Enabled",
+              "defaultValue": "1",
+              "help": "Enable or disable this tenant"
+            }
+          ],
+          "options": {
+            "saveValidator": "function(formData) { return true; }"
+          }
+        },
+        {
+          "name": "credentials",
+          "title": "Credentials",
+          "table": {
+            "header": [
+              {
+                "field": "name",
+                "label": "Name"
+              },
+              {
+                "field": "provider",
+                "label": "Provider"
+              },
+              {
+                "field": "tenant",
+                "label": "Tenant"
+              },
+              {
+                "field": "console",
+                "label": "Console"
+              }
+            ],
+            "actions": [
+              "edit",
+              "delete",
+              "clone"
+            ]
+          },
+          "entity": [
+            {
+              "field": "name",
+              "type": "text",
+              "label": "Name",
+              "validators": [
+                {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 50,
+                  "errorMsg": "Name is required and must be between 1 and 50 characters"
+                },
+                {
+                  "type": "pattern",
+                  "pattern": "^[a-zA-Z0-9_-]+$",
+                  "errorMsg": "Name must contain only alphanumeric characters, underscores, and hyphens"
+                }
+              ],
+              "help": "Unique identifier for this credential"
+            },
+            {
+              "field": "provider",
+              "type": "singleSelect",
+              "label": "Provider",
+              "options": {
+                "delimiter": ",",
+                "items": [
+                  {
+                    "value": "crowdstrike",
+                    "label": "CrowdStrike"
+                  },
+                  {
+                    "value": "sentinelone",
+                    "label": "SentinelOne"
+                  },
+                  {
+                    "value": "defender",
+                    "label": "Microsoft Defender"
+                  }
+                ]
+              },
+              "validators": [
+                {
+                  "type": "string",
+                  "minLength": 1,
+                  "errorMsg": "Provider is required"
+                }
+              ],
+              "help": "EDR provider for this credential"
+            },
+            {
+              "field": "tenant",
+              "type": "text",
+              "label": "Tenant",
+              "defaultValue": "default",
+              "help": "Tenant ID for this credential"
+            },
+            {
+              "field": "console",
+              "type": "text",
+              "label": "Console",
+              "defaultValue": "primary",
+              "help": "Console ID for this credential"
+            },
+            {
+              "field": "username",
+              "type": "text",
+              "label": "Username / Client ID",
+              "validators": [
+                {
+                  "type": "string",
+                  "minLength": 1,
+                  "errorMsg": "Username is required"
+                }
+              ],
+              "encrypted": false,
+              "help": "Username or Client ID for authentication"
+            },
+            {
+              "field": "password",
+              "type": "password",
+              "label": "Password / Client Secret",
+              "validators": [
+                {
+                  "type": "string",
+                  "minLength": 1,
+                  "errorMsg": "Password is required"
+                }
+              ],
+              "encrypted": true,
+              "help": "Password or Client Secret for authentication"
+            },
+            {
+              "field": "tenant_id",
+              "type": "text",
+              "label": "Azure AD Tenant ID",
+              "validators": [
+                {
+                  "type": "pattern",
+                  "pattern": "^$|^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$",
+                  "errorMsg": "Must be a valid GUID or empty"
+                }
+              ],
+              "help": "Azure AD Tenant ID (for Microsoft Defender only)"
+            }
+          ],
+          "options": {
+            "saveValidator": "function(formData) { return true; }"
+          }
+        }
+      ]
+    }
+  },
+  "meta": {
+    "name": "EDR Threat Hunt Command",
+    "displayName": "EDR Threat Hunt Command",
+    "version": "2.0.0",
+    "apiVersion": "3.0.0",
+    "restRoot": "ta_edr_threat_hunt_cmd"
+  }
+}
