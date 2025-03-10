@@ -1,0 +1,11 @@
+<?xml version="1.0"?>
+<dashboard isDashboard="false" script="js/build/settings_page.js" stylesheet="css/configuration.css">
+  <label>Settings</label>
+  <row>
+    <panel>
+      <html>
+        <div id="settings-container">Loading settings...</div>
+      </html>
+    </panel>
+  </row>
+</dashboard>

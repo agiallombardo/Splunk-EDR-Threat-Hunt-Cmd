@@ -1,0 +1,50 @@
+<%!
+# This is important - use the internal app ID format that Splunk expects
+app_name = "ta_edr_threat_hunt_cmd"
+%>
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>EDR Threat Hunt Command - Setup</title>
+    
+    <!-- Use Splunk's CSS -->
+    <link rel="stylesheet" type="text/css" href="${make_url('/static/build/css/bootstrap-enterprise.css')}">
+    <link rel="stylesheet" type="text/css" href="${make_url('/static/css/build/pages/dashboard-simple-bootstrap.min.css')}">
+    
+    <!-- App-specific CSS -->
+    <link rel="stylesheet" type="text/css" href="${make_url('/static/app/%s/css/setup.css' % app_name)}">
+    
+    <!-- Splunk JS -->
+    <script src="${make_url('/config?autoload=1')}"></script>
+    <script src="${make_url('/static/js/i18n.js')}"></script>
+    <script src="${make_url('/i18ncatalog?autoload=1')}"></script>
+    <script src="${make_url('/static/build/js/splunkjs/compiled/splunkjs-ready.js')}"></script>
+</head>
+<body class="app-${app_name}">
+    <div class="main-section-body">
+        <div id="main-container" class="main-container">
+            <div class="loading">Loading setup page...</div>
+        </div>
+    </div>
+
+    <script>
+        // Wait for Splunk JS to be ready
+        document.addEventListener("DOMContentLoaded", function() {
+            require([
+                "jquery",
+                "splunkjs/mvc",
+                "splunkjs/mvc/utils",
+                "app/${app_name}/js/setup",
+                "bootstrap"
+            ], function($, mvc, utils) {
+                // Setup is now loaded and initialized
+                $('.loading').hide();
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,25 @@
+[]
+access = read : [ * ], write : [ admin, power ]
+
+[commands]
+export = system
+owner = nobody
+
+[lookups]
+access = read : [ * ], write : [ admin, power ]
+export = system
+owner = nobody
+
+[passwords]
+access = read : [ admin ], write : [ admin ]
+export = none
+owner = nobody
+
+[threathunt]
+access = read : [ admin ], write : [ admin ]
+export = system
+owner = nobody
+
+[searchbnf]
+export = system
+owner = nobody

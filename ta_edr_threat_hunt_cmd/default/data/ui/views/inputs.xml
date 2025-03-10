@@ -1,0 +1,11 @@
+<?xml version="1.0"?>
+<dashboard isDashboard="false" script="js/build/inputs_page.js" stylesheet="css/configuration.css">
+  <label>Inputs</label>
+  <row>
+    <panel>
+      <html>
+        <div id="inputs-container">Loading inputs...</div>
+      </html>
+    </panel>
+  </row>
+</dashboard>

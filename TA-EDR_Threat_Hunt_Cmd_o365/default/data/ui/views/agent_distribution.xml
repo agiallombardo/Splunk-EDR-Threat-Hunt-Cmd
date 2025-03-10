@@ -1,0 +1,310 @@
+<?xml version="1.1" encoding="UTF-8"?>
+<dashboard version="1.1" theme="dark" stylesheet="edr_dashboard.css">
+  <label>EDR Agent Distribution</label>
+  <description>Distribution metrics for EDR agents across environment</description>
+
+  <fieldset submitButton="true" autoRun="true">
+    <input type="multiselect" token="tenant_token" searchWhenChanged="false">
+      <label>Tenant</label>
+      <search>
+        <query> <![CDATA[
+          | inputlookup edr_agents
+          | stats count by tenant
+          | sort tenant
+        ]]></query>
+      </search>
+      <fieldForLabel>tenant</fieldForLabel>
+      <fieldForValue>tenant</fieldForValue>
+      <delimiter> OR </delimiter>
+      <valueSuffix>"</valueSuffix>
+      <valuePrefix>tenant="</valuePrefix>
+      <default>*</default>
+      <choice value="*">All</choice>
+    </input>
+    
+    <input type="multiselect" token="provider_token" searchWhenChanged="false">
+      <label>Provider</label>
+      <choice value="*">All</choice>
+      <choice value="provider=&quot;crowdstrike&quot;">CrowdStrike</choice>
+      <choice value="provider=&quot;sentinelone&quot;">SentinelOne</choice>
+      <choice value="provider=&quot;defender&quot;">Microsoft Defender</choice>
+      <default>*</default>
+      <delimiter> OR </delimiter>
+    </input>
+    
+    <input type="multiselect" token="status_token" searchWhenChanged="false">
+      <label>Status</label>
+      <search>
+        <query> <![CDATA[
+          | inputlookup edr_agents
+          | stats count by status
+          | sort status
+        ]]></query>
+      </search>
+      <fieldForLabel>status</fieldForLabel>
+      <fieldForValue>status</fieldForValue>
+      <delimiter> OR </delimiter>
+      <valueSuffix>"</valueSuffix>
+      <valuePrefix>status="</valuePrefix>
+      <default>*</default>
+      <choice value="*">All</choice>
+    </input>
+  </fieldset>
+
+
+
+  <row>
+    <panel>
+      <title>OS Platform Distribution</title>
+      <chart>
+        <search>
+          <query> <![CDATA[
+            | inputlookup edr_agents
+            | search 
+              $tenant_token$ 
+              $provider_token$ 
+              $status_token$
+            | stats count by os_platform
+            | sort -count
+          ]]></query>
+        </search>
+        <option name="charting.chart">column</option>
+        <option name="charting.drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="charting.chart.showDataLabels">true</option>
+        <option name="charting.legend.placement">none</option>
+      </chart>
+    </panel>
+    
+    <panel>
+      <title>Agents by Tenant</title>
+      <chart>
+        <search>
+          <query> <![CDATA[
+            | inputlookup edr_agents
+            | search 
+              $tenant_token$ 
+              $provider_token$ 
+              $status_token$
+            | stats count by tenant
+            | sort -count
+          ]]></query>
+        </search>
+        <option name="charting.chart">bar</option>
+        <option name="charting.drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="charting.chart.showDataLabels">true</option>
+        <option name="charting.legend.placement">none</option>
+      </chart>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Agent Version Distribution (Top 10)</title>
+      <chart>
+        <search>
+          <query> <![CDATA[
+            | inputlookup edr_agents
+            | search 
+              $tenant_token$ 
+              $provider_token$ 
+              $status_token$
+            | stats count by version
+            | sort -count
+            | head 10
+          ]]></query>
+        </search>
+        <option name="charting.chart">column</option>
+        <option name="charting.drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="charting.chart.showDataLabels">true</option>
+        <option name="charting.legend.placement">none</option>
+      </chart>
+    </panel>
+    
+    <panel>
+      <title>Last Seen Distribution</title>
+      <chart>
+        <search>
+          <query> <![CDATA[
+            | inputlookup edr_agents
+            | search 
+              $tenant_token$ 
+              $provider_token$ 
+              $status_token$
+            | eval last_seen_days_ago=round((now() - strptime(last_seen, "%Y-%m-%dT%H:%M:%SZ"))/86400,1)
+            | eval time_bucket=case(
+                isnull(last_seen_days_ago), "Unknown",
+                last_seen_days_ago <= 1, "Less than 1 day",
+                last_seen_days_ago <= 7, "1-7 days",
+                last_seen_days_ago <= 30, "8-30 days",
+                last_seen_days_ago > 30, "More than 30 days"
+              )
+            | stats count by time_bucket
+            | sort case(
+                time_bucket="Less than 1 day", 0,
+                time_bucket="1-7 days", 1,
+                time_bucket="8-30 days", 2,
+                time_bucket="More than 30 days", 3,
+                time_bucket="Unknown", 4
+              )
+          ]]></query>
+        </search>
+        <option name="charting.chart">column</option>
+        <option name="charting.drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="charting.chart.showDataLabels">true</option>
+        <option name="charting.legend.placement">none</option>
+        <option name="charting.fieldColors">{"Less than 1 day": "#53a051", "1-7 days": "#0877a6", "8-30 days": "#f8be34", "More than 30 days": "#dc4e41", "Unknown": "#808080"}</option>
+      </chart>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Agent Trend by Provider (Last 30 Days)</title>
+      <chart>
+        <search>
+          <query> <![CDATA[
+            | inputlookup edr_agents
+            | search 
+              $tenant_token$ 
+              $provider_token$ 
+              $status_token$
+            | eval _time=strptime(last_seen, "%Y-%m-%dT%H:%M:%SZ")
+            | timechart span=1d count by provider
+          ]]></query>
+          <earliest>-30d@d</earliest>
+          <latest>now</latest>
+        </search>
+        <option name="charting.chart">line</option>
+        <option name="charting.drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="charting.legend.placement">right</option>
+        <option name="charting.chart.showMarkers">true</option>
+        <option name="charting.fieldColors">{"crowdstrike": "#F82B60", "sentinelone": "#00BFB3", "defender": "#0078D4"}</option>
+      </chart>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Provider Status</title>
+      <table>
+        <search>
+          <query> <![CDATA[
+            | inputlookup edr_health_results
+            | sort -_key
+            | head 1
+            | eval crowdstrike_creds=credential_counts.crowdstrike
+            | eval sentinelone_creds=credential_counts.sentinelone
+            | eval defender_creds=credential_counts.defender
+            | mvexpand api_status
+            | eval tenant=mvindex(split(mvindex(split(api_status, "="), 0), "\""), 1)
+            | eval provider_status=mvindex(split(api_status, "="), 1)
+            | fields tenant provider_status
+            | mvexpand provider_status
+            | eval provider=mvindex(split(mvindex(split(provider_status, ":"), 0), "\""), 1)
+            | eval status_data=mvindex(split(provider_status, ":"), 1)
+            | eval ok_count=mvindex(split(mvindex(split(mvindex(split(status_data, ","), 1), ":"), 1), "}"), 0)
+            | eval error_count=mvindex(split(mvindex(split(mvindex(split(status_data, ","), 2), ":"), 1), "}"), 0)
+            | eval total_count=mvindex(split(mvindex(split(mvindex(split(status_data, ","), 3), ":"), 1), "}"), 0)
+            | eval status=case(
+                total_count==0, "Not Configured",
+                ok_count==total_count, "✓ All Connected",
+                ok_count > 0, "⚠ Partially Connected (".ok_count."/".total_count.")",
+                ok_count==0, "✗ Not Connected",
+                1==1, "Unknown"
+              )
+            | table tenant provider status
+            | rename tenant as "Tenant", provider as "Provider", status as "Status"
+          ]]></query>
+          <earliest>-24h</earliest>
+          <latest>now</latest>
+        </search>
+        <option name="count">20</option>
+        <option name="drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+        <format field="Status" type="color">
+          <colorPalette type="map">{"✓ All Connected":#53a051,"⚠ Partially Connected":#f8be34,"✗ Not Connected":#dc4e41,"Not Configured":#999999,"Unknown":#999999}</colorPalette>
+        </format>
+      </table>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Dashboard Navigation</title>
+      <html>
+        <div class="dashboard-navigation">
+          <div class="nav-row">
+            <a href="edr_overview" class="nav-button">
+              <div class="nav-icon"><i class="icon-home"></i></div>
+              <div class="nav-label">Overview</div>
+            </a>
+            <a href="integration_health" class="nav-button">
+              <div class="nav-icon"><i class="icon-health"></i></div>
+              <div class="nav-label">Integration Health</div>
+            </a>
+            <a href="agent_inventory" class="nav-button">
+              <div class="nav-icon"><i class="icon-list"></i></div>
+              <div class="nav-label">Agent Inventory</div>
+            </a>
+          </div>
+          <div class="nav-row">
+            <a href="geographic_view" class="nav-button">
+              <div class="nav-icon"><i class="icon-globe"></i></div>
+              <div class="nav-label">Geographic View</div>
+            </a>
+            <a href="agent_health" class="nav-button">
+              <div class="nav-icon"><i class="icon-check"></i></div>
+              <div class="nav-label">Agent Health</div>
+            </a>
+            <a href="threat_hunting" class="nav-button">
+              <div class="nav-icon"><i class="icon-search"></i></div>
+              <div class="nav-label">Threat Hunting</div>
+            </a>
+          </div>
+        </div>
+
+        <style>
+          .dashboard-navigation {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+          }
+          .nav-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            justify-content: center;
+          }
+          .nav-button {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 15px;
+            background-color: #1A1C21;
+            border-radius: 8px;
+            color: #ffffff;
+            text-decoration: none;
+            width: 160px;
+            transition: background-color 0.2s;
+          }
+          .nav-button:hover {
+            background-color: #2A2C31;
+          }
+          .nav-icon {
+            font-size: 24px;
+            margin-bottom: 10px;
+          }
+          .nav-label {
+            font-size: 14px;
+            text-align: center;
+          }
+        </style>
+      </html>
+    </panel>
+  </row>
+</dashboard>

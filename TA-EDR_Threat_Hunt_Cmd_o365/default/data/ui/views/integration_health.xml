@@ -1,0 +1,309 @@
+<?xml version="1.1" encoding="UTF-8"?>
+<dashboard version="1.1" theme="dark" stylesheet="edr_dashboard.css">
+  <label>EDR Integration Health</label>
+  <description>Health and status monitoring for EDR integrations</description>
+ 
+  
+  <row>
+    <panel>
+      <title>Health Score Trend</title>
+      <chart>
+        <search>
+          <query> <![CDATA[
+            | inputlookup edr_health_results
+            | sort _key
+            | eval time=strptime(timestamp, "%Y-%m-%d %H:%M:%S")
+            | chart avg(overall_score) AS "Overall Score" by time
+          ]]></query>
+          <earliest>-7d</earliest>
+          <latest>now</latest>
+        </search>
+        <option name="charting.axisTitleX.visibility">visible</option>
+        <option name="charting.axisTitleY.visibility">visible</option>
+        <option name="charting.axisTitleY.text">Score</option>
+        <option name="charting.chart">line</option>
+        <option name="charting.drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="charting.chart.showMarkers">1</option>
+        <option name="charting.fieldColors">{"Overall Score": 0x53a051}</option>
+        <option name="charting.lineWidth">2</option>
+      </chart>
+    </panel>
+  </row>
+  
+  <row>
+    <panel>
+      <title>Component Scores Over Time</title>
+      <chart>
+        <search>
+          <query> <![CDATA[
+            | inputlookup edr_health_results
+            | sort _key
+            | eval time=strptime(timestamp, "%Y-%m-%d %H:%M:%S")
+            | eval app_status=component_scores.app_status
+            | eval credentials=component_scores.credentials
+            | eval tenant_consoles=component_scores.tenant_consoles
+            | eval kvstore=component_scores.kvstore
+            | eval api_connectivity=component_scores.api_connectivity
+            | eval search_commands=component_scores.search_commands
+            | chart avg(app_status) AS "App Status" avg(credentials) AS "Credentials" avg(tenant_consoles) AS "Tenant Consoles" avg(kvstore) AS "KV Store" avg(api_connectivity) AS "API Connectivity" avg(search_commands) AS "Search Commands" by time
+          ]]></query>
+          <earliest>-7d</earliest>
+          <latest>now</latest>
+        </search>
+        <option name="charting.axisTitleX.visibility">visible</option>
+        <option name="charting.axisTitleY.visibility">visible</option>
+        <option name="charting.axisTitleY.text">Score</option>
+        <option name="charting.chart">line</option>
+        <option name="charting.drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="charting.chart.showMarkers">0</option>
+        <option name="charting.legend.placement">right</option>
+      </chart>
+    </panel>
+  </row>
+  
+  <row>
+    <panel>
+      <title>Search Command Status</title>
+      <table>
+        <search>
+          <query> <![CDATA[
+            | inputlookup edr_health_results
+            | sort -_key
+            | head 1
+            | eval edrhunt_registered=if(command_status.edrhunt==1, "✓ Registered", "✗ Not Registered")
+            | eval agentdiscovery_registered=if(command_status.agentdiscovery==1, "✓ Registered", "✗ Not Registered")
+            | table edrhunt_registered agentdiscovery_registered
+            | rename edrhunt_registered as "EDRHunt Command", agentdiscovery_registered as "AgentDiscovery Command"
+          ]]></query>
+          <earliest>-24h</earliest>
+          <latest>now</latest>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+        <format field="EDRHunt Command" type="color">
+          <colorPalette type="map">{"✓ Registered":#53a051,"✗ Not Registered":#dc4e41}</colorPalette>
+        </format>
+        <format field="AgentDiscovery Command" type="color">
+          <colorPalette type="map">{"✓ Registered":#53a051,"✗ Not Registered":#dc4e41}</colorPalette>
+        </format>
+      </table>
+    </panel>
+    
+    <panel>
+      <title>KV Store Status</title>
+      <table>
+        <search>
+          <query> <![CDATA[
+            | inputlookup edr_health_results
+            | sort -_key
+            | head 1
+            | eval kvstore_running=if(kvstore_status=="ready", "✓ Running", "✗ Not Running")
+            | eval agent_collection=if(isnotnull(agent_counts), "✓ Available", "✗ Not Available")
+            | table kvstore_running agent_collection
+            | rename kvstore_running as "KV Store Service", agent_collection as "Agent Collection"
+          ]]></query>
+          <earliest>-24h</earliest>
+          <latest>now</latest>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+        <format field="KV Store Service" type="color">
+          <colorPalette type="map">{"✓ Running":#53a051,"✗ Not Running":#dc4e41}</colorPalette>
+        </format>
+        <format field="Agent Collection" type="color">
+          <colorPalette type="map">{"✓ Available":#53a051,"✗ Not Available":#dc4e41}</colorPalette>
+        </format>
+      </table>
+    </panel>
+  </row>
+  
+  <row>
+    <panel>
+      <title>Health Check History</title>
+      <table>
+        <search>
+          <query> <![CDATA[
+            | inputlookup edr_health_results
+            | sort -_key
+            | eval Score=overall_score
+            | eval Status=upper(health_status)
+            | eval "Check Time"=timestamp
+            | eval "App Version"=app_status.version
+            | eval "API Connections"=component_scores.api_connectivity
+            | eval "Command Status"=component_scores.search_commands
+            | table "Check Time" Score Status "App Version" "API Connections" "Command Status"
+          ]]></query>
+          <earliest>-7d</earliest>
+          <latest>now</latest>
+        </search>
+        <option name="count">10</option>
+        <option name="dataOverlayMode">none</option>
+        <option name="drilldown">none</option>
+        <option name="percentagesRow">false</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="rowNumbers">true</option>
+        <option name="totalsRow">false</option>
+        <option name="wrap">true</option>
+        <format field="Status" type="color">
+          <colorPalette type="map">{"HEALTHY":#53a051,"DEGRADED":#f8be34,"UNHEALTHY":#dc4e41}</colorPalette>
+        </format>
+        <format field="Score" type="color">
+          <colorPalette type="range">{"ranges":[[0,50,"#dc4e41"],[50,80,"#f8be34"],[80,101,"#53a051"]]}</colorPalette>
+        </format>
+      </table>
+    </panel>
+  </row>
+  
+  <row>
+    <panel>
+      <title>Run Health Check</title>
+      <input type="dropdown" token="collection_name">
+        <label>Results Collection</label>
+        <choice value="edr_health_results">edr_health_results</choice>
+        <default>edr_health_results</default>
+      </input>
+      <html>
+        <div class="health-check-panel">
+          <button id="runHealthCheck" class="btn btn-primary">Run Health Check Now</button>
+          <div id="healthCheckStatus" class="status-message"></div>
+          
+          <div class="last-run-info">
+            <script>
+              require(['jquery', 'splunkjs/mvc/searchmanager', 'splunkjs/mvc/utils'], function($, SearchManager, utils) {
+                // Get last health check time
+                var lastRunSearch = new SearchManager({
+                  id: 'last-run-search',
+                  search: '| inputlookup edr_health_results | sort -_key | head 1 | eval last_run=strftime(strptime(timestamp, "%Y-%m-%d %H:%M:%S"), "%Y-%m-%d %H:%M:%S") | eval last_run=last_run." (".relative_time(now(), "-".round((now()-strptime(timestamp, "%Y-%m-%d %H:%M:%S")))."s").")" | table last_run',
+                  earliest_time: '-24h',
+                  latest_time: 'now',
+                  preview: false
+                });
+                
+                lastRunSearch.on('search:done', function() {
+                  lastRunSearch.data('results').once('data', function() {
+                    var results = lastRunSearch.data('results').data().results;
+                    if (results &amp;&amp;results.length > 0) {
+                      $('.last-run-info').html('<div class="info-text">Last health check: ' + results[0].last_run + '</div>');
+                    }
+                  });
+                });
+                
+                // Run health check button
+                $('#runHealthCheck').on('click', function() {
+                  $('#healthCheckStatus').html('<div class="loading">Running health check...</div>');
+                  
+                  // Make REST API call to run health check
+                  $.ajax({
+                    url: utils.make_url('/services/edr/execute'),
+                    type: 'POST',
+                    data: JSON.stringify({
+                      command: 'health_check',
+                      parameters: {
+                        collection: $('#collection_name').val()
+                      }
+                    }),
+                    contentType: 'application/json',
+                    success: function(data) {
+                      $('#healthCheckStatus').html('<div class="success">Health check completed successfully</div>');
+                      
+                      // Show refresh button
+                      $('#healthCheckStatus').append('<button id="refreshDashboard" class="btn btn-success">Refresh Dashboard</button>');
+                      $('#refreshDashboard').on('click', function() {
+                        window.location.reload();
+                      });
+                      
+                      // Auto refresh after 5 seconds
+                      setTimeout(function() {
+                        window.location.reload();
+                      }, 5000);
+                    },
+                    error: function(jqXHR, textStatus, errorThrown) {
+                      $('#healthCheckStatus').html('<div class="error">Error running health check: ' + errorThrown + '</div>');
+                    }
+                  });
+                });
+              });
+            </script>
+          </div>
+        </div>
+      </html>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Dashboard Navigation</title>
+      <html>
+        <div class="dashboard-navigation">
+          <div class="nav-row">
+            <a href="edr_overview" class="nav-button">
+              <div class="nav-icon"><i class="icon-home"></i></div>
+              <div class="nav-label">Overview</div>
+            </a>
+            <a href="agent_distribution" class="nav-button">
+              <div class="nav-icon"><i class="icon-bar-chart"></i></div>
+              <div class="nav-label">Agent Distribution</div>
+            </a>
+            <a href="agent_inventory" class="nav-button">
+              <div class="nav-icon"><i class="icon-list"></i></div>
+              <div class="nav-label">Agent Inventory</div>
+            </a>
+          </div>
+          <div class="nav-row">
+            <a href="agent_health" class="nav-button">
+              <div class="nav-icon"><i class="icon-check"></i></div>
+              <div class="nav-label">Agent Health</div>
+            </a>
+            <a href="process_explorer" class="nav-button">
+              <div class="nav-icon"><i class="icon-process"></i></div>
+              <div class="nav-label">Process Explorer</div>
+            </a>
+            <a href="threat_hunting" class="nav-button">
+              <div class="nav-icon"><i class="icon-search"></i></div>
+              <div class="nav-label">Threat Hunting</div>
+            </a>
+          </div>
+        </div>
+
+        <style>
+          .dashboard-navigation {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+          }
+          .nav-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            justify-content: center;
+          }
+          .nav-button {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 15px;
+            background-color: #1A1C21;
+            border-radius: 8px;
+            color: #ffffff;
+            text-decoration: none;
+            width: 160px;
+            transition: background-color 0.2s;
+          }
+          .nav-button:hover {
+            background-color: #2A2C31;
+          }
+          .nav-icon {
+            font-size: 24px;
+            margin-bottom: 10px;
+          }
+          .nav-label {
+            font-size: 14px;
+            text-align: center;
+          }
+        </style>
+      </html>
+    </panel>
+  </row>
+</dashboard>

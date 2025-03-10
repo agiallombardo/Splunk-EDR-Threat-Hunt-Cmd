@@ -1,0 +1,397 @@
+<?xml version="1.1" encoding="UTF-8"?>
+<dashboard version="1.1" theme="dark" stylesheet="edr_dashboard.css">
+  <label>EDR Agent Health</label>
+  <description>Health status of EDR agents across environment</description>
+  
+  <fieldset submitButton="true" autoRun="true">
+    <input type="multiselect" token="tenant_token" searchWhenChanged="false">
+      <label>Tenant</label>
+      <search>
+        <query> <![CDATA[
+          | inputlookup edr_agents
+          | stats count by tenant
+          | sort tenant
+        ]]></query>
+      </search>
+      <fieldForLabel>tenant</fieldForLabel>
+      <fieldForValue>tenant</fieldForValue>
+      <delimiter> OR </delimiter>
+      <valueSuffix>"</valueSuffix>
+      <valuePrefix>tenant="</valuePrefix>
+      <default>*</default>
+      <choice value="*">All</choice>
+    </input>
+    
+    <input type="multiselect" token="provider_token" searchWhenChanged="false">
+      <label>Provider</label>
+      <choice value="*">All</choice>
+      <choice value="provider=&quot;crowdstrike&quot;">CrowdStrike</choice>
+      <choice value="provider=&quot;sentinelone&quot;">SentinelOne</choice>
+      <choice value="provider=&quot;defender&quot;">Microsoft Defender</choice>
+      <default>*</default>
+      <delimiter> OR </delimiter>
+    </input>
+    
+    <input type="multiselect" token="os_platform_token" searchWhenChanged="false">
+      <label>OS Platform</label>
+      <search>
+        <query> <![CDATA[
+          | inputlookup edr_agents
+          | stats count by os_platform
+          | sort os_platform
+        ]]></query>
+      </search>
+      <fieldForLabel>os_platform</fieldForLabel>
+      <fieldForValue>os_platform</fieldForValue>
+      <delimiter> OR </delimiter>
+      <valueSuffix>"</valueSuffix>
+      <valuePrefix>os_platform="</valuePrefix>
+      <default>*</default>
+      <choice value="*">All</choice>
+    </input>
+    
+    <input type="text" token="hostname_token" searchWhenChanged="false">
+      <label>Hostname (regex)</label>
+      <default>*</default>
+      <prefix>hostname="</prefix>
+      <suffix>"</suffix>
+    </input>
+  </fieldset>
+
+
+  <row>
+    <panel>
+      <title>Agent Status Overview</title>
+      <chart>
+        <search>
+          <query> <![CDATA[
+            | inputlookup edr_agents
+            | search 
+              $tenant_token$ 
+              $provider_token$ 
+              $os_platform_token$
+              $hostname_token$
+            | stats count by status
+            | sort -count
+          ]]></query>
+        </search>
+        <option name="charting.chart">pie</option>
+        <option name="charting.drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="charting.legend.placement">right</option>
+        <option name="charting.chart.showPercent">true</option>
+        <option name="charting.fieldColors">{"online": "#53a051", "offline": "#dc4e41", "unknown": "#f8be34"}</option>
+      </chart>
+    </panel>
+    
+    <panel>
+      <title>Agent Status Count</title>
+      <single>
+        <search>
+          <query> <![CDATA[
+            | inputlookup edr_agents
+            | search 
+              $tenant_token$ 
+              $provider_token$ 
+              $os_platform_token$
+              $hostname_token$
+            | stats 
+                count(eval(status="online")) AS "Online" 
+                count(eval(status="offline")) AS "Offline" 
+                count(eval(status="unknown")) AS "Unknown"
+          ]]></query>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="colorBy">value</option>
+        <option name="colorMode">block</option>
+        <option name="numberPrecision">0</option>
+        <option name="showSparkline">1</option>
+        <option name="showTrendIndicator">1</option>
+        <option name="trendDisplayMode">absolute</option>
+        <option name="trendColorInterpretation">standard</option>
+        <option name="useColors">1</option>
+        <option name="useThousandSeparators">1</option>
+        <option name="rangeColors">["0x53a051", "0x0877a6", "0xf8be34", "0xf1813f", "0xdc4e41"]</option>
+      </single>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Last Seen Distribution</title>
+      <chart>
+        <search>
+          <query> <![CDATA[
+            | inputlookup edr_agents
+            | search 
+              $tenant_token$ 
+              $provider_token$ 
+              $os_platform_token$
+              $hostname_token$
+            | eval last_seen_days_ago=round((now() - strptime(last_seen, "%Y-%m-%dT%H:%M:%SZ"))/86400,1)
+            | eval time_bucket=case(
+                isnull(last_seen_days_ago), "Unknown",
+                last_seen_days_ago <= 1, "Less than 1 day",
+                last_seen_days_ago <= 7, "1-7 days",
+                last_seen_days_ago <= 30, "8-30 days",
+                last_seen_days_ago > 30, "More than 30 days"
+              )
+            | stats count by time_bucket
+            | sort case(
+                time_bucket="Less than 1 day", 0,
+                time_bucket="1-7 days", 1,
+                time_bucket="8-30 days", 2,
+                time_bucket="More than 30 days", 3,
+                time_bucket="Unknown", 4
+              )
+          ]]></query>
+        </search>
+        <option name="charting.chart">column</option>
+        <option name="charting.drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="charting.chart.showDataLabels">true</option>
+        <option name="charting.legend.placement">none</option>
+        <option name="charting.fieldColors">{"Less than 1 day": "#53a051", "1-7 days": "#0877a6", "8-30 days": "#f8be34", "More than 30 days": "#dc4e41", "Unknown": "#808080"}</option>
+      </chart>
+    </panel>
+    
+    <panel>
+      <title>Agent Version Health</title>
+      <chart>
+        <search>
+          <query> <![CDATA[
+            | inputlookup edr_agents
+            | search 
+              $tenant_token$ 
+              $provider_token$ 
+              $os_platform_token$
+              $hostname_token$
+            | stats count as version_count by provider version
+            | sort provider version_count
+            | join provider [
+              | inputlookup edr_agents 
+              | stats count by provider
+              | rename count as total_count
+            ]
+            | eval percentage = round((version_count / total_count) * 100, 1)
+            | sort -version_count
+            | head 10
+          ]]></query>
+        </search>
+        <option name="charting.chart">bar</option>
+        <option name="charting.drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="charting.chart.showDataLabels">true</option>
+        <option name="charting.legend.placement">none</option>
+      </chart>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Agent Status by Provider</title>
+      <chart>
+        <search>
+          <query> <![CDATA[
+            | inputlookup edr_agents
+            | search 
+              $tenant_token$ 
+              $provider_token$ 
+              $os_platform_token$
+              $hostname_token$
+            | stats count by provider status
+            | sort provider status
+          ]]></query>
+        </search>
+        <option name="charting.chart">column</option>
+        <option name="charting.chart.stackMode">stacked</option>
+        <option name="charting.drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="charting.legend.placement">right</option>
+        <option name="charting.fieldColors">{"online": "#53a051", "offline": "#dc4e41", "unknown": "#f8be34"}</option>
+      </chart>
+    </panel>
+    
+    <panel>
+      <title>Agent Status by OS Platform</title>
+      <chart>
+        <search>
+          <query> <![CDATA[
+            | inputlookup edr_agents
+            | search 
+              $tenant_token$ 
+              $provider_token$ 
+              $os_platform_token$
+              $hostname_token$
+            | stats count by os_platform status
+            | sort os_platform status
+          ]]></query>
+        </search>
+        <option name="charting.chart">column</option>
+        <option name="charting.chart.stackMode">stacked</option>
+        <option name="charting.drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="charting.legend.placement">right</option>
+        <option name="charting.fieldColors">{"online": "#53a051", "offline": "#dc4e41", "unknown": "#f8be34"}</option>
+      </chart>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Agent Health Trend</title>
+      <chart>
+        <search>
+          <query> <![CDATA[
+            | inputlookup edr_agents
+            | search 
+              $tenant_token$ 
+              $provider_token$ 
+              $os_platform_token$
+              $hostname_token$
+            | eval _time=strptime(last_seen, "%Y-%m-%dT%H:%M:%SZ")
+            | timechart span=1d count by status
+          ]]></query>
+          <earliest>-30d@d</earliest>
+          <latest>now</latest>
+        </search>
+        <option name="charting.chart">line</option>
+        <option name="charting.drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="charting.legend.placement">right</option>
+        <option name="charting.chart.showMarkers">true</option>
+        <option name="charting.fieldColors">{"online": "#53a051", "offline": "#dc4e41", "unknown": "#f8be34"}</option>
+      </chart>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Agents Needing Attention</title>
+      <table>
+        <search>
+          <query> <![CDATA[
+            | inputlookup edr_agents
+            | search 
+              $tenant_token$ 
+              $provider_token$ 
+              $os_platform_token$
+              $hostname_token$
+            | eval last_seen_days_ago=round((now() - strptime(last_seen, "%Y-%m-%dT%H:%M:%SZ"))/86400,1)
+            | where status="offline" OR status="unknown" OR last_seen_days_ago > 7
+            | eval issue=case(
+                status="offline", "Agent Offline",
+                status="unknown", "Status Unknown",
+                last_seen_days_ago > 30, "Not Seen in 30+ Days",
+                last_seen_days_ago > 14, "Not Seen in 14+ Days",
+                last_seen_days_ago > 7, "Not Seen in 7+ Days"
+              )
+            | eval severity=case(
+                status="offline" OR last_seen_days_ago > 30, "High",
+                status="unknown" OR last_seen_days_ago > 14, "Medium",
+                last_seen_days_ago > 7, "Low"
+              )
+            | table hostname ip_address os_platform version issue severity last_seen provider tenant
+            | rename hostname as "Hostname" ip_address as "IP Address" os_platform as "OS Platform" version as "Version" issue as "Issue" severity as "Severity" last_seen as "Last Seen" provider as "Provider" tenant as "Tenant"
+            | sort "Severity", "Last Seen"
+          ]]></query>
+        </search>
+        <option name="count">20</option>
+        <option name="dataOverlayMode">none</option>
+        <option name="drilldown">cell</option>
+        <option name="rowNumbers">true</option>
+        <option name="wrap">true</option>
+        <option name="refresh.display">progressbar</option>
+        <format field="Last Seen" type="date" timeFormat="%Y-%m-%d %H:%M:%S"/>
+        <format field="Severity" type="color">
+          <colorPalette type="map">{"High":#dc4e41,"Medium":#f8be34,"Low":#0877a6}</colorPalette>
+        </format>
+        <drilldown>
+          <link target="_blank">
+            <![CDATA[
+            search?q=| makeresults | eval hostname="$row.Hostname$" | edrhunt provider="$row.Provider$" tenant="$row.Tenant$" data_type="summary"
+            ]]>
+          </link>
+        </drilldown>
+      </table>
+    </panel>
+  </row>
+
+  
+
+  <row>
+    <panel>
+      <title>Dashboard Navigation</title>
+      <html>
+        <div class="dashboard-navigation">
+          <div class="nav-row">
+            <a href="edr_navigation" class="nav-button">
+              <div class="nav-icon"><i class="icon-home"></i></div>
+              <div class="nav-label">Security Center</div>
+            </a>
+            <a href="edr_overview" class="nav-button">
+              <div class="nav-icon"><i class="icon-bar-chart"></i></div>
+              <div class="nav-label">Status Overview</div>
+            </a>
+            <a href="agent_inventory" class="nav-button">
+              <div class="nav-icon"><i class="icon-list"></i></div>
+              <div class="nav-label">Agent Inventory</div>
+            </a>
+          </div>
+          <div class="nav-row">
+            <a href="geographic_view" class="nav-button">
+              <div class="nav-icon"><i class="icon-globe"></i></div>
+              <div class="nav-label">Geographic View</div>
+            </a>
+            <a href="agent_distribution" class="nav-button">
+              <div class="nav-icon"><i class="icon-chart-pie"></i></div>
+              <div class="nav-label">Agent Distribution</div>
+            </a>
+            <a href="integration_health" class="nav-button">
+              <div class="nav-icon"><i class="icon-health"></i></div>
+              <div class="nav-label">Integration Health</div>
+            </a>
+          </div>
+        </div>
+
+        <style>
+          .dashboard-navigation {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+          }
+          .nav-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            justify-content: center;
+          }
+          .nav-button {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 15px;
+            background-color: #1A1C21;
+            border-radius: 8px;
+            color: #ffffff;
+            text-decoration: none;
+            width: 160px;
+            transition: background-color 0.2s;
+          }
+          .nav-button:hover {
+            background-color: #2A2C31;
+          }
+          .nav-icon {
+            font-size: 24px;
+            margin-bottom: 10px;
+          }
+          .nav-label {
+            font-size: 14px;
+            text-align: center;
+          }
+        </style>
+      </html>
+    </panel>
+  </row>
+</dashboard>

@@ -1,0 +1,392 @@
+/* EDR Dashboard CSS Enhancements */
+
+/* General Dashboard Styling */
+.dashboard-body {
+    background-color: #1a1a1a;
+    color: #e0e0e0;
+}
+
+.dashboard-panel {
+    background-color: #2a2a2a;
+    border-radius: 5px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+    border: 1px solid #444;
+    margin-bottom: 15px;
+}
+
+.dashboard-panel-header {
+    background-color: #333;
+    border-bottom: 1px solid #444;
+}
+
+.dashboard-panel-title {
+    color: #fff;
+    font-weight: 500;
+    font-size: 16px;
+}
+
+/* Status Bar */
+.edr-status-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #2a2a2a;
+    padding: 10px 15px;
+    border-radius: 4px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+    margin-top: 5px;
+}
+
+.edr-status-bar[data-status="running"] {
+    border-left: 4px solid #3498db;
+}
+
+.edr-status-bar[data-status="done"] {
+    border-left: 4px solid #2ecc71;
+}
+
+.edr-status-bar[data-status="error"] {
+    border-left: 4px solid #e74c3c;
+}
+
+.status-message {
+    font-size: 14px;
+    flex: 1;
+}
+
+.status-progress {
+    width: 200px;
+    height: 8px;
+    background-color: #444;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.progress-bar {
+    height: 100%;
+    background-color: #3498db;
+    width: 0%;
+    transition: width 0.3s ease;
+}
+
+.progress-bar.fade-out {
+    transition: opacity 1s ease;
+    opacity: 0.3;
+}
+
+/* Form Controls Styling */
+.input-label {
+    font-weight: 500;
+    color: #e0e0e0;
+}
+
+.input-dropdown, .input-text {
+    background-color: #333;
+    color: #e0e0e0;
+    border: 1px solid #555;
+    border-radius: 4px;
+    padding: 6px 10px;
+}
+
+.input-dropdown:focus, .input-text:focus {
+    border-color: #3498db;
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.3);
+}
+
+.submit-button {
+    background-color: #3498db;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 8px 16px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.submit-button:hover {
+    background-color: #2980b9;
+}
+
+/* Visualization Enhancements */
+.chart-container, .table-container {
+    padding: 10px;
+}
+
+.empty-results {
+    padding: 20px;
+    text-align: center;
+    color: #888;
+    font-style: italic;
+}
+
+.search-error {
+    padding: 20px;
+    text-align: center;
+    color: #e74c3c;
+    font-weight: bold;
+}
+
+/* Process Tree Visualization */
+#process-tree-viz {
+    background-color: #2a2a2a;
+    border-radius: 4px;
+    border: 1px solid #444;
+    padding: 10px;
+}
+
+/* Export Controls */
+.export-controls {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 15px;
+}
+
+#exportBtn {
+    padding: 8px 16px;
+    font-size: 14px;
+    background-color: #3498db;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+#exportBtn:hover {
+    background-color: #2980b9;
+}
+
+#exportStatus {
+    margin-top: 10px;
+    min-height: 30px;
+}
+
+/* Loading, Success and Error Messages */
+.loading {
+    color: #3498db;
+    font-style: italic;
+    display: flex;
+    align-items: center;
+}
+
+.loading::before {
+    content: "";
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    margin-right: 10px;
+    border: 2px solid rgba(52, 152, 219, 0.3);
+    border-radius: 50%;
+    border-top-color: #3498db;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+.success {
+    color: #2ecc71;
+    font-weight: bold;
+}
+
+.error {
+    color: #e74c3c;
+    font-weight: bold;
+}
+
+/* Help Panel Styling */
+.help-panel {
+    padding: 15px;
+    max-height: 500px;
+    overflow-y: auto;
+}
+
+.help-section {
+    margin-bottom: 20px;
+}
+
+.help-section h3 {
+    color: #3498db;
+    margin-top: 0;
+    margin-bottom: 10px;
+    border-bottom: 1px solid #444;
+    padding-bottom: 5px;
+}
+
+.help-section p {
+    margin-bottom: 10px;
+}
+
+.help-section pre {
+    background-color: #333;
+    padding: 10px;
+    border-radius: 4px;
+    overflow-x: auto;
+    color: #e0e0e0;
+    font-family: monospace;
+    border: 1px solid #444;
+}
+
+.help-section a {
+    color: #3498db;
+    text-decoration: none;
+}
+
+.help-section a:hover {
+    text-decoration: underline;
+}
+
+/* Tabbed Content */
+.tabbed-content {
+    margin-top: 15px;
+}
+
+.tab-headers {
+    display: flex;
+    border-bottom: 1px solid #444;
+}
+
+.tab-header {
+    padding: 8px 15px;
+    cursor: pointer;
+    background-color: #333;
+    margin-right: 2px;
+    border-radius: 4px 4px 0 0;
+}
+
+.tab-header.active {
+    background-color: #2a2a2a;
+    border: 1px solid #444;
+    border-bottom: none;
+}
+
+.tab-content {
+    background-color: #2a2a2a;
+    padding: 15px;
+    border: 1px solid #444;
+    border-top: none;
+}
+
+.tab-pane {
+    display: none;
+}
+
+.tab-pane.active {
+    display: block;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+    .edr-status-bar {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .status-message {
+        margin-bottom: 10px;
+    }
+    
+    .status-progress {
+        width: 100%;
+    }
+    
+    .tab-headers {
+        flex-direction: column;
+    }
+    
+    .tab-header {
+        border-radius: 0;
+        margin-right: 0;
+        margin-bottom: 2px;
+    }
+}
+
+/* Override Splunk's Default Theme for Dark Mode */
+.dashboard-element .single-value .single-result .result-value {
+    color: #e0e0e0;
+}
+
+.dashboard-element .dashboard-cell.dashboard-cell-visualization {
+    background-color: transparent;
+}
+
+.dashboard-panel-footer {
+    background-color: #2a2a2a;
+    border-top: 1px solid #444;
+}
+
+.table-drilldown td {
+    background-color: #333 !important;
+    color: #e0e0e0 !important;
+    border-color: #444 !important;
+}
+
+.table-drilldown th {
+    background-color: #222 !important;
+    color: #e0e0e0 !important;
+    border-color: #444 !important;
+}
+
+.table-drilldown tr:hover td {
+    background-color: #444 !important;
+}
+
+/* Timeline Specific Styling */
+.timeline-viz text {
+    fill: #e0e0e0 !important;
+}
+
+.timeline-viz .axis path,
+.timeline-viz .axis line {
+    stroke: #444 !important;
+}
+
+.timeline-viz .grid line {
+    stroke: #333 !important;
+}
+
+/* Map Visualization Styling */
+.leaflet-popup-content-wrapper,
+.leaflet-popup-tip {
+    background: #2a2a2a !important;
+    color: #e0e0e0 !important;
+    border: 1px solid #444 !important;
+}
+
+.leaflet-bar a {
+    background-color: #2a2a2a !important;
+    color: #e0e0e0 !important;
+    border-bottom: 1px solid #444 !important;
+}
+
+.leaflet-bar a:hover {
+    background-color: #333 !important;
+}
+
+/* Tooltip Styling */
+.tooltip {
+    position: absolute;
+    padding: 10px;
+    background-color: rgba(0, 0, 0, 0.8);
+    color: #fff;
+    border-radius: 4px;
+    font-size: 12px;
+    z-index: 10000;
+    max-width: 300px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+}
+
+.tooltip-title {
+    font-weight: bold;
+    margin-bottom: 5px;
+    color: #3498db;
+}
+
+.tooltip-content {
+    font-size: 11px;
+    line-height: 1.4;
+}

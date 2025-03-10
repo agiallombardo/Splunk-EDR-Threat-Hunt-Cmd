@@ -1,0 +1,4 @@
+<?xml version="1.0"?>
+<view template="ta_edr_threat_hunt_cmd:templates/setup.html" type="html" isDashboard="False">
+  <label>Setup</label>
+</view>
