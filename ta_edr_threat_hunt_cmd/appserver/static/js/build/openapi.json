@@ -1,0 +1,1301 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "ta_edr_threat_hunt_cmd API",
+    "description": "API for EDR Threat Hunt Command app",
+    "version": "2.0.0",
+    "contact": {
+      "name": "Anthony Giallombardo"
+    }
+  },
+  "servers": [
+    {
+      "url": "/servicesNS/nobody/ta_edr_threat_hunt_cmd"
+    }
+  ],
+  "paths": {
+    "/ta_edr_threat_hunt_cmd_settings": {
+      "get": {
+        "summary": "Get global settings",
+        "operationId": "getSettings",
+        "tags": ["Settings"],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SettingsResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      },
+      "post": {
+        "summary": "Update global settings",
+        "operationId": "updateSettings",
+        "tags": ["Settings"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/SettingsRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Bad request"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/ta_edr_threat_hunt_cmd_credentials": {
+      "get": {
+        "summary": "Get credentials",
+        "operationId": "getCredentials",
+        "tags": ["Credentials"],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CredentialsListResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      },
+      "post": {
+        "summary": "Create or update credential",
+        "operationId": "createOrUpdateCredential",
+        "tags": ["Credentials"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/CredentialRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Bad request"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/ta_edr_threat_hunt_cmd_credentials/{name}": {
+      "delete": {
+        "summary": "Delete credential",
+        "operationId": "deleteCredential",
+        "tags": ["Credentials"],
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Bad request"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Credential not found"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/ta_edr_threat_hunt_cmd_credentials/{name}/_test_connection": {
+      "post": {
+        "summary": "Test credential connection",
+        "operationId": "testCredentialConnection",
+        "tags": ["Credentials"],
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Bad request"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Credential not found"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/ta_edr_threat_hunt_cmd_tenants": {
+      "get": {
+        "summary": "Get tenants",
+        "operationId": "getTenants",
+        "tags": ["Tenants"],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TenantsListResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      },
+      "post": {
+        "summary": "Create or update tenant",
+        "operationId": "createOrUpdateTenant",
+        "tags": ["Tenants"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/TenantRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Bad request"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/ta_edr_threat_hunt_cmd_tenants/{name}": {
+      "delete": {
+        "summary": "Delete tenant",
+        "operationId": "deleteTenant",
+        "tags": ["Tenants"],
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Bad request"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Tenant not found"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/ta_edr_threat_hunt_cmd_agentdiscovery_inputs": {
+      "get": {
+        "summary": "Get agent discovery inputs",
+        "operationId": "getAgentDiscoveryInputs",
+        "tags": ["Inputs"],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InputsListResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      },
+      "post": {
+        "summary": "Create or update agent discovery input",
+        "operationId": "createOrUpdateAgentDiscoveryInput",
+        "tags": ["Inputs"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/AgentDiscoveryInputRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Bad request"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/ta_edr_threat_hunt_cmd_agentdiscovery_inputs/{name}": {
+      "delete": {
+        "summary": "Delete agent discovery input",
+        "operationId": "deleteAgentDiscoveryInput",
+        "tags": ["Inputs"],
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Bad request"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Input not found"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/ta_edr_threat_hunt_cmd_edrhunt_inputs": {
+      "get": {
+        "summary": "Get EDR hunt inputs",
+        "operationId": "getEDRHuntInputs",
+        "tags": ["Inputs"],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InputsListResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      },
+      "post": {
+        "summary": "Create or update EDR hunt input",
+        "operationId": "createOrUpdateEDRHuntInput",
+        "tags": ["Inputs"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/EDRHuntInputRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Bad request"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/ta_edr_threat_hunt_cmd_edrhunt_inputs/{name}": {
+      "delete": {
+        "summary": "Delete EDR hunt input",
+        "operationId": "deleteEDRHuntInput",
+        "tags": ["Inputs"],
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Bad request"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Input not found"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/ta_edr_threat_hunt_cmd_healthcheck_inputs": {
+      "get": {
+        "summary": "Get health check inputs",
+        "operationId": "getHealthCheckInputs",
+        "tags": ["Inputs"],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InputsListResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      },
+      "post": {
+        "summary": "Create or update health check input",
+        "operationId": "createOrUpdateHealthCheckInput",
+        "tags": ["Inputs"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/HealthCheckInputRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Bad request"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/ta_edr_threat_hunt_cmd_healthcheck_inputs/{name}": {
+      "delete": {
+        "summary": "Delete health check input",
+        "operationId": "deleteHealthCheckInput",
+        "tags": ["Inputs"],
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Bad request"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Input not found"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/ta_edr_threat_hunt_cmd_setup": {
+      "get": {
+        "summary": "Get setup status",
+        "operationId": "getSetupStatus",
+        "tags": ["Setup"],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SetupStatusResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      },
+      "post": {
+        "summary": "Update setup",
+        "operationId": "updateSetup",
+        "tags": ["Setup"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/SetupRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Bad request"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "SettingsResponse": {
+        "type": "object",
+        "properties": {
+          "entry": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string"
+                },
+                "content": {
+                  "type": "object",
+                  "properties": {
+                    "enable_logging": {
+                      "type": "string"
+                    },
+                    "log_level": {
+                      "type": "string"
+                    },
+                    "cache_ttl": {
+                      "type": "string"
+                    },
+                    "default_threads": {
+                      "type": "string"
+                    },
+                    "default_batch_size": {
+                      "type": "string"
+                    },
+                    "default_limit": {
+                      "type": "string"
+                    },
+                    "process_limit": {
+                      "type": "string"
+                    },
+                    "event_limit": {
+                      "type": "string"
+                    },
+                    "network_limit": {
+                      "type": "string"
+                    },
+                    "file_limit": {
+                      "type": "string"
+                    },
+                    "enable_response_compression": {
+                      "type": "string"
+                    },
+                    "enable_connection_pooling": {
+                      "type": "string"
+                    },
+                    "api_timeout": {
+                      "type": "string"
+                    },
+                    "include_raw_default": {
+                      "type": "string"
+                    },
+                    "enable_sampling": {
+                      "type": "string"
+                    },
+                    "sample_threshold": {
+                      "type": "string"
+                    },
+                    "sample_size": {
+                      "type": "string"
+                    },
+                    "enable_cache": {
+                      "type": "string"
+                    },
+                    "cache_expiry": {
+                      "type": "string"
+                    },
+                    "cache_size_limit": {
+                      "type": "string"
+                    },
+                    "crowdstrike_enabled": {
+                      "type": "string"
+                    },
+                    "crowdstrike_api_url": {
+                      "type": "string"
+                    },
+                    "crowdstrike_max_rate": {
+                      "type": "string"
+                    },
+                    "crowdstrike_api_timeout": {
+                      "type": "string"
+                    },
+                    "crowdstrike_api_connect_timeout": {
+                      "type": "string"
+                    },
+                    "crowdstrike_api_read_timeout": {
+                      "type": "string"
+                    },
+                    "crowdstrike_default_batch_size": {
+                      "type": "string"
+                    },
+                    "crowdstrike_default_filter": {
+                      "type": "string"
+                    },
+                    "sentinelone_enabled": {
+                      "type": "string"
+                    },
+                    "sentinelone_api_url": {
+                      "type": "string"
+                    },
+                    "sentinelone_max_rate": {
+                      "type": "string"
+                    },
+                    "sentinelone_api_timeout": {
+                      "type": "string"
+                    },
+                    "sentinelone_api_connect_timeout": {
+                      "type": "string"
+                    },
+                    "sentinelone_api_read_timeout": {
+                      "type": "string"
+                    },
+                    "sentinelone_default_batch_size": {
+                      "type": "string"
+                    },
+                    "sentinelone_default_filter": {
+                      "type": "string"
+                    },
+                    "defender_enabled": {
+                      "type": "string"
+                    },
+                    "defender_api_url": {
+                      "type": "string"
+                    },
+                    "defender_max_rate": {
+                      "type": "string"
+                    },
+                    "defender_api_timeout": {
+                      "type": "string"
+                    },
+                    "defender_api_connect_timeout": {
+                      "type": "string"
+                    },
+                    "defender_api_read_timeout": {
+                      "type": "string"
+                    },
+                    "defender_default_batch_size": {
+                      "type": "string"
+                    },
+                    "defender_default_filter": {
+                      "type": "string"
+                    },
+                    "defender_use_advanced_hunting": {
+                      "type": "string"
+                    },
+                    "kvstore_collection": {
+                      "type": "string"
+                    },
+                    "agent_ttl": {
+                      "type": "string"
+                    },
+                    "backup_to_csv": {
+                      "type": "string"
+                    },
+                    "backup_frequency": {
+                      "type": "string"
+                    },
+                    "backup_path": {
+                      "type": "string"
+                    },
+                    "encrypted_fields": {
+                      "type": "string"
+                    },
+                    "default_scan_interval": {
+                      "type": "string"
+                    },
+                    "schedule_scan": {
+                      "type": "string"
+                    },
+                    "auto_purge_stale": {
+                      "type": "string"
+                    },
+                    "stale_threshold": {
+                      "type": "string"
+                    },
+                    "enable_health_monitoring": {
+                      "type": "string"
+                    },
+                    "health_check_interval": {
+                      "type": "string"
+                    },
+                    "health_results_collection": {
+                      "type": "string"
+                    },
+                    "health_retention_days": {
+                      "type": "string"
+                    },
+                    "alert_on_degradation": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "SettingsRequest": {
+        "type": "object",
+        "properties": {
+          "enable_logging": {
+            "type": "string"
+          },
+          "log_level": {
+            "type": "string"
+          },
+          "cache_ttl": {
+            "type": "string"
+          },
+          "default_threads": {
+            "type": "string"
+          },
+          "default_batch_size": {
+            "type": "string"
+          },
+          "default_limit": {
+            "type": "string"
+          },
+          "process_limit": {
+            "type": "string"
+          },
+          "event_limit": {
+            "type": "string"
+          },
+          "network_limit": {
+            "type": "string"
+          },
+          "file_limit": {
+            "type": "string"
+          },
+          "enable_response_compression": {
+            "type": "string"
+          },
+          "enable_connection_pooling": {
+            "type": "string"
+          },
+          "api_timeout": {
+            "type": "string"
+          },
+          "include_raw_default": {
+            "type": "string"
+          },
+          "enable_sampling": {
+            "type": "string"
+          },
+          "sample_threshold": {
+            "type": "string"
+          },
+          "sample_size": {
+            "type": "string"
+          },
+          "enable_cache": {
+            "type": "string"
+          },
+          "cache_expiry": {
+            "type": "string"
+          },
+          "cache_size_limit": {
+            "type": "string"
+          },
+          "crowdstrike_enabled": {
+            "type": "string"
+          },
+          "crowdstrike_api_url": {
+            "type": "string"
+          },
+          "crowdstrike_max_rate": {
+            "type": "string"
+          },
+          "crowdstrike_api_timeout": {
+            "type": "string"
+          },
+          "crowdstrike_api_connect_timeout": {
+            "type": "string"
+          },
+          "crowdstrike_api_read_timeout": {
+            "type": "string"
+          },
+          "crowdstrike_default_batch_size": {
+            "type": "string"
+          },
+          "crowdstrike_default_filter": {
+            "type": "string"
+          },
+          "sentinelone_enabled": {
+            "type": "string"
+          },
+          "sentinelone_api_url": {
+            "type": "string"
+          },
+          "sentinelone_max_rate": {
+            "type": "string"
+          },
+          "sentinelone_api_timeout": {
+            "type": "string"
+          },
+          "sentinelone_api_connect_timeout": {
+            "type": "string"
+          },
+          "sentinelone_api_read_timeout": {
+            "type": "string"
+          },
+          "sentinelone_default_batch_size": {
+            "type": "string"
+          },
+          "sentinelone_default_filter": {
+            "type": "string"
+          },
+          "defender_enabled": {
+            "type": "string"
+          },
+          "defender_api_url": {
+            "type": "string"
+          },
+          "defender_max_rate": {
+            "type": "string"
+          },
+          "defender_api_timeout": {
+            "type": "string"
+          },
+          "defender_api_connect_timeout": {
+            "type": "string"
+          },
+          "defender_api_read_timeout": {
+            "type": "string"
+          },
+          "defender_default_batch_size": {
+            "type": "string"
+          },
+          "defender_default_filter": {
+            "type": "string"
+          },
+          "defender_use_advanced_hunting": {
+            "type": "string"
+          },
+          "kvstore_collection": {
+            "type": "string"
+          },
+          "agent_ttl": {
+            "type": "string"
+          },
+          "backup_to_csv": {
+            "type": "string"
+          },
+          "backup_frequency": {
+            "type": "string"
+          },
+          "backup_path": {
+            "type": "string"
+          },
+          "encrypted_fields": {
+            "type": "string"
+          },
+          "default_scan_interval": {
+            "type": "string"
+          },
+          "schedule_scan": {
+            "type": "string"
+          },
+          "auto_purge_stale": {
+            "type": "string"
+          },
+          "stale_threshold": {
+            "type": "string"
+          },
+          "enable_health_monitoring": {
+            "type": "string"
+          },
+          "health_check_interval": {
+            "type": "string"
+          },
+          "health_results_collection": {
+            "type": "string"
+          },
+          "health_retention_days": {
+            "type": "string"
+          },
+          "alert_on_degradation": {
+            "type": "string"
+          }
+        }
+      },
+      "CredentialsListResponse": {
+        "type": "object",
+        "properties": {
+          "entry": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string"
+                },
+                "content": {
+                  "type": "object",
+                  "properties": {
+                    "name": {
+                      "type": "string"
+                    },
+                    "provider": {
+                      "type": "string"
+                    },
+                    "tenant": {
+                      "type": "string"
+                    },
+                    "console": {
+                      "type": "string"
+                    },
+                    "username": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "CredentialRequest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "provider": {
+            "type": "string"
+          },
+          "tenant": {
+            "type": "string"
+          },
+          "console": {
+            "type": "string"
+          },
+          "username": {
+            "type": "string"
+          },
+          "password": {
+            "type": "string"
+          }
+        },
+        "required": ["name", "provider", "username"]
+      },
+      "TenantsListResponse": {
+        "type": "object",
+        "properties": {
+          "entry": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string"
+                },
+                "content": {
+                  "type": "object",
+                  "properties": {
+                    "name": {
+                      "type": "string"
+                    },
+                    "description": {
+                      "type": "string"
+                    },
+                    "enabled": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "TenantRequest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "enabled": {
+            "type": "string"
+          }
+        },
+        "required": ["name"]
+      },
+      "InputsListResponse": {
+        "type": "object",
+        "properties": {
+          "entry": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string"
+                },
+                "content": {
+                  "type": "object",
+                  "properties": {
+                    "name": {
+                      "type": "string"
+                    },
+                    "interval": {
+                      "type": "string"
+                    },
+                    "index": {
+                      "type": "string"
+                    },
+                    "disabled": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "AgentDiscoveryInputRequest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "interval": {
+            "type": "string"
+          },
+          "tenant": {
+            "type": "string"
+          },
+          "provider": {
+            "type": "string"
+          },
+          "console": {
+            "type": "string"
+          },
+          "limit": {
+            "type": "string"
+          },
+          "filter": {
+            "type": "string"
+          },
+          "index": {
+            "type": "string"
+          },
+"disabled": {
+            "type": "string"
+          }
+        },
+        "required": ["name", "interval", "provider"]
+      },
+      "EDRHuntInputRequest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "interval": {
+            "type": "string"
+          },
+          "tenant": {
+            "type": "string"
+          },
+          "provider": {
+            "type": "string"
+          },
+          "console": {
+            "type": "string"
+          },
+          "query": {
+            "type": "string"
+          },
+          "data_type": {
+            "type": "string"
+          },
+          "time_range": {
+            "type": "string"
+          },
+          "limit": {
+            "type": "string"
+          },
+          "index": {
+            "type": "string"
+          },
+          "disabled": {
+            "type": "string"
+          }
+        },
+        "required": ["name", "interval", "provider", "query", "data_type"]
+      },
+      "HealthCheckInputRequest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "interval": {
+            "type": "string"
+          },
+          "tenants": {
+            "type": "string"
+          },
+          "providers": {
+            "type": "string"
+          },
+          "include_agent_scan": {
+            "type": "string"
+          },
+          "include_api_test": {
+            "type": "string"
+          },
+          "scan_agents_limit": {
+            "type": "string"
+          },
+          "index": {
+            "type": "string"
+          },
+          "disabled": {
+            "type": "string"
+          }
+        },
+        "required": ["name", "interval"]
+      },
+      "SetupStatusResponse": {
+        "type": "object",
+        "properties": {
+          "entry": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string"
+                },
+                "content": {
+                  "type": "object",
+                  "properties": {
+                    "is_configured": {
+                      "type": "string"
+                    },
+                    "log_level": {
+                      "type": "string"
+                    },
+                    "enable_logging": {
+                      "type": "string"
+                    },
+                    "default_tenant": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "SetupRequest": {
+        "type": "object",
+        "properties": {
+          "log_level": {
+            "type": "string"
+          },
+          "default_tenant": {
+            "type": "string"
+          },
+          "enable_logging": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}
